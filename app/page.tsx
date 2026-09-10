@@ -60,6 +60,7 @@ export default function Home() {
 
   // --- ইউজারের ডেটা সেভ/লোড (Gmail অনুযায়ী, এই ব্রাউজারে) ---
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const currentEmailRef = useRef(null);
 
   useEffect(() => {
@@ -68,30 +69,44 @@ export default function Home() {
       return;
     }
     currentEmailRef.current = user.email;
-    try {
-      const saved = localStorage.getItem(`studyTracker:data:${user.email}`);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setMyCourses(parsed.myCourses || []);
-        setFriendCourses(parsed.friendCourses || []);
-        setRooms(parsed.rooms || []);
-        setSelectedRoomId(parsed.selectedRoomId ?? null);
-      } else {
-        setMyCourses([]);
-        setFriendCourses([]);
-        setRooms([]);
-        setSelectedRoomId(null);
+    (async () => {
+      try {
+        const res = await fetch("/api/data");
+        if (res.ok) {
+          const data = await res.json();
+          if (data) {
+            setMyCourses(data.myCourses || []);
+            setFriendCourses(data.friendCourses || []);
+            setRooms(data.rooms || []);
+            setSelectedRoomId(data.selectedRoomId ?? null);
+          } else {
+            setMyCourses([]);
+            setFriendCourses([]);
+            setRooms([]);
+            setSelectedRoomId(null);
+          }
+        }
+      } catch (e) {
+        // নেটওয়ার্ক সমস্যা হলে ডেটা লোড হবে না, সার্ভারে সেভ আছে কিন্তু নষ্ট হবে না
       }
-    } catch (e) {
-      // corrupted data থাকলে খালি অবস্থা থেকে শুরু করো
-    }
-    setDataLoaded(true);
+      setDataLoaded(true);
+    })();
   }, [user?.email]);
 
   useEffect(() => {
     if (!dataLoaded || !currentEmailRef.current) return;
-    const payload = JSON.stringify({ myCourses, friendCourses, rooms, selectedRoomId });
-    localStorage.setItem(`studyTracker:data:${currentEmailRef.current}`, payload);
+    const payload = { myCourses, friendCourses, rooms, selectedRoomId };
+    setIsSyncing(true);
+    const t = setTimeout(() => {
+      fetch("/api/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+        .catch(() => {})
+        .finally(() => setIsSyncing(false));
+    }, 700);
+    return () => clearTimeout(t);
   }, [myCourses, friendCourses, rooms, selectedRoomId, dataLoaded]);
 
   // Modals State
@@ -114,6 +129,12 @@ export default function Home() {
   const [newRoomName, setNewRoomName] = useState("");
   const [newRoomCode, setNewRoomCode] = useState("");
   const [joinRoomCodeInput, setJoinRoomCodeInput] = useState("");
+
+  // প্রতিটা কোর্সে শিক্ষক-ভিত্তিক সেকশন (teacher1/teacher2) খোলা/বন্ধ রাখার স্টেট
+  const [expandedTeacherSections, setExpandedTeacherSections] = useState({});
+  const toggleTeacherSection = (key) => {
+    setExpandedTeacherSections((prev) => ({ ...prev, [key]: prev[key] === false ? true : false }));
+  };
 
   const currentCourses = activeTab === "my" ? myCourses : friendCourses;
   const currentRoom = rooms.find((r) => r.id === selectedRoomId) || rooms[0];
@@ -549,7 +570,7 @@ export default function Home() {
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-[#EAE7DC] flex items-center justify-center p-4">
-        <p className="text-slate-400 text-sm font-medium">লোড হচ्ছে...</p>
+        <p className="text-slate-400 text-sm font-medium">লোড হচ্ছে...</p>
       </div>
     );
   }
@@ -638,6 +659,12 @@ export default function Home() {
               </div>
             )}
             <span className="text-xs font-semibold text-slate-500">{user.email}</span>
+            {isSyncing && (
+              <span className="text-[10px] font-bold text-blue-500 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></span>
+                সেভ হচ্ছে...
+              </span>
+            )}
             <button
               onClick={handleLogout}
               className="text-[11px] font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-full transition"
@@ -965,8 +992,8 @@ export default function Home() {
                   </div>
 
                   {/* Course Body Grid */}
-                  <div className="grid grid-cols-2 gap-3 md:gap-6">
-                    {/* Chapters & Topics List */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                    {/* Chapters & Topics List (শিক্ষক অনুযায়ী গ্রুপ করা) */}
                     <div>
                       <div className="flex justify-between items-center mb-3">
                         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -982,129 +1009,167 @@ export default function Home() {
                         )}
                       </div>
 
-                      <div className="space-y-2">
-                        {course.chapters.map((chap) => (
-                          <div
-                            key={chap.id}
-                            className="border border-slate-100 rounded-xl overflow-hidden bg-slate-50/50 hover:bg-slate-50 transition"
-                          >
-                            {/* Chapter Header Row */}
-                            <div
-                              onClick={() => toggleExpandChapter(course.id, chap.id)}
-                              className="flex items-center justify-between p-3 cursor-pointer select-none"
-                            >
-                              <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <input
-                                  type="checkbox"
-                                  checked={chap.done}
-                                  disabled={activeTab !== "my"}
-                                  onChange={(e) => toggleChapterDone(course.id, chap.id, e)}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="w-5 h-5 accent-blue-600 rounded cursor-pointer shrink-0"
-                                />
-                                <span
-                                  className={`text-sm font-semibold truncate ${
-                                    chap.done ? "line-through text-slate-400" : "text-slate-700"
-                                  }`}
-                                >
-                                  {chap.name}
+                      <div className="space-y-3">
+                        {["teacher1", "teacher2"].map((tKey) => {
+                          const teacherChapters = course.chapters.filter((c) => c.teacher === tKey);
+                          const sectionKey = `${course.id}:${tKey}`;
+                          const isSectionExpanded = expandedTeacherSections[sectionKey] !== false;
+                          const doneCount = teacherChapters.filter((c) => c.done).length;
+
+                          return (
+                            <div key={tKey} className="border border-cyan-200 rounded-xl overflow-hidden">
+                              {/* Teacher Section Header */}
+                              <div
+                                onClick={() => toggleTeacherSection(sectionKey)}
+                                className="flex items-center justify-between gap-2 p-2.5 bg-cyan-50/70 hover:bg-cyan-50 cursor-pointer select-none"
+                              >
+                                <span className="text-xs font-bold text-cyan-800 flex items-center gap-1.5 min-w-0">
+                                  <span className="shrink-0">👨‍🏫</span>
+                                  <span className="truncate">{getTeacherLabel(course, tKey)}</span>
                                 </span>
-                                <span className="text-[10px] font-bold text-cyan-700 bg-cyan-50 border border-cyan-200 px-2 py-0.5 rounded-full shrink-0 flex items-center gap-1">
-                                  👨‍🏫 {getTeacherLabel(course, chap.teacher)}
+                                <span className="flex items-center gap-2 shrink-0">
+                                  {teacherChapters.length > 0 && (
+                                    <span className="text-[10px] font-bold text-cyan-700 bg-white px-2 py-0.5 rounded-full border border-cyan-200">
+                                      {doneCount}/{teacherChapters.length}
+                                    </span>
+                                  )}
+                                  <span className="text-cyan-400 text-xs">{isSectionExpanded ? "▲" : "▼"}</span>
                                 </span>
-                                {chap.topics && chap.topics.length > 0 && (
-                                  <span className="text-[11px] font-bold text-slate-400 bg-slate-200/60 px-2 py-0.5 rounded-full shrink-0">
-                                    {chap.topics.filter((t) => t.done).length}/{chap.topics.length}
-                                  </span>
-                                )}
                               </div>
 
-                              <div className="flex items-center gap-1 ml-2 shrink-0">
-                                {activeTab === "my" && (
-                                  <>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setEditChapterModal({ isOpen: true, courseId: course.id, chapterId: chap.id, name: chap.name, teacher: chap.teacher || "teacher1" });
-                                      }}
-                                      title="এডিট করো"
-                                      className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-blue-600 transition"
-                                    >
-                                      ✏️
-                                    </button>
-                                    <button
-                                      onClick={(e) => handleDeleteChapter(course.id, chap.id, e)}
-                                      title="ডিলিট করো"
-                                      className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-red-600 transition"
-                                    >
-                                      🗑️
-                                    </button>
-                                  </>
-                                )}
-                                <span className="text-slate-400 text-xs ml-1">
-                                  {chap.expanded ? "▲" : "▼"}
-                                </span>
-                              </div>
+                              {/* Teacher Section Body */}
+                              {isSectionExpanded && (
+                                <div className="p-2 space-y-2 bg-white">
+                                  {teacherChapters.length === 0 ? (
+                                    <p className="text-[11px] text-slate-400 italic px-1 py-1.5">
+                                      এই শিক্ষকের কোনো চ্যাপ্টার যোগ করা হয়নি
+                                    </p>
+                                  ) : (
+                                    teacherChapters.map((chap) => (
+                                      <div
+                                        key={chap.id}
+                                        className="border border-slate-100 rounded-xl overflow-hidden bg-slate-50/50 hover:bg-slate-50 transition"
+                                      >
+                                        {/* Chapter Header Row */}
+                                        <div
+                                          onClick={() => toggleExpandChapter(course.id, chap.id)}
+                                          className="flex items-center justify-between gap-2 p-3 cursor-pointer select-none"
+                                        >
+                                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                                            <input
+                                              type="checkbox"
+                                              checked={chap.done}
+                                              disabled={activeTab !== "my"}
+                                              onChange={(e) => toggleChapterDone(course.id, chap.id, e)}
+                                              onClick={(e) => e.stopPropagation()}
+                                              className="w-5 h-5 accent-blue-600 rounded cursor-pointer shrink-0"
+                                            />
+                                            <span
+                                              className={`text-sm font-semibold truncate min-w-0 ${
+                                                chap.done ? "line-through text-slate-400" : "text-slate-700"
+                                              }`}
+                                            >
+                                              {chap.name}
+                                            </span>
+                                            {chap.topics && chap.topics.length > 0 && (
+                                              <span className="text-[11px] font-bold text-slate-400 bg-slate-200/60 px-2 py-0.5 rounded-full shrink-0">
+                                                {chap.topics.filter((t) => t.done).length}/{chap.topics.length}
+                                              </span>
+                                            )}
+                                          </div>
+
+                                          <div className="flex items-center gap-1 shrink-0">
+                                            {activeTab === "my" && (
+                                              <>
+                                                <button
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setEditChapterModal({ isOpen: true, courseId: course.id, chapterId: chap.id, name: chap.name, teacher: chap.teacher || "teacher1" });
+                                                  }}
+                                                  title="এডিট করো"
+                                                  className="p-1.5 hover:bg-slate-200 rounded text-slate-400 hover:text-blue-600 transition shrink-0"
+                                                >
+                                                  ✏️
+                                                </button>
+                                                <button
+                                                  onClick={(e) => handleDeleteChapter(course.id, chap.id, e)}
+                                                  title="ডিলিট করো"
+                                                  className="p-1.5 hover:bg-slate-200 rounded text-slate-400 hover:text-red-600 transition shrink-0"
+                                                >
+                                                  🗑️
+                                                </button>
+                                              </>
+                                            )}
+                                            <span className="text-slate-400 text-xs ml-0.5 shrink-0">
+                                              {chap.expanded ? "▲" : "▼"}
+                                            </span>
+                                          </div>
+                                        </div>
+
+                                        {/* Expanded Topics Section */}
+                                        {chap.expanded && (
+                                          <div className="bg-white p-3 border-t border-slate-100 pl-8 space-y-2">
+                                            {chap.topics && chap.topics.length > 0 ? (
+                                              chap.topics.map((topic) => (
+                                                <div
+                                                  key={topic.id}
+                                                  className="flex items-center justify-between text-xs py-1 group"
+                                                >
+                                                  <label className="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                                                    <input
+                                                      type="checkbox"
+                                                      checked={topic.done}
+                                                      disabled={activeTab !== "my"}
+                                                      onChange={() => toggleTopicDone(course.id, chap.id, topic.id)}
+                                                      className="w-4 h-4 accent-blue-600 rounded cursor-pointer shrink-0"
+                                                    />
+                                                    <span
+                                                      className={`truncate ${
+                                                        topic.done ? "line-through text-slate-400" : "text-slate-600 font-medium"
+                                                      }`}
+                                                    >
+                                                      {topic.name}
+                                                    </span>
+                                                  </label>
+                                                  {activeTab === "my" && (
+                                                    <button
+                                                      onClick={() => handleDeleteTopic(course.id, chap.id, topic.id)}
+                                                      className="text-slate-300 hover:text-red-600 opacity-80 group-hover:opacity-100 transition px-1 shrink-0"
+                                                    >
+                                                      ✕
+                                                    </button>
+                                                  )}
+                                                </div>
+                                              ))
+                                            ) : (
+                                              <p className="text-[11px] text-slate-400 italic">কোনো টপিক যোগ করা হয়নি</p>
+                                            )}
+
+                                            {activeTab === "my" && (
+                                              <button
+                                                onClick={() =>
+                                                  setAddTopicModal({
+                                                    isOpen: true,
+                                                    courseId: course.id,
+                                                    chapterId: chap.id,
+                                                    name: "",
+                                                  })
+                                                }
+                                                className="mt-2 text-xs font-bold text-blue-600 hover:underline inline-block"
+                                              >
+                                                + টপিক যোগ করো
+                                              </button>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+                              )}
                             </div>
-
-                            {/* Expanded Topics Section */}
-                            {chap.expanded && (
-                              <div className="bg-white p-3 border-t border-slate-100 pl-8 space-y-2">
-                                {chap.topics && chap.topics.length > 0 ? (
-                                  chap.topics.map((topic) => (
-                                    <div
-                                      key={topic.id}
-                                      className="flex items-center justify-between text-xs py-1 group"
-                                    >
-                                      <label className="flex items-center gap-2 cursor-pointer flex-1">
-                                        <input
-                                          type="checkbox"
-                                          checked={topic.done}
-                                          disabled={activeTab !== "my"}
-                                          onChange={() => toggleTopicDone(course.id, chap.id, topic.id)}
-                                          className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
-                                        />
-                                        <span
-                                          className={`${
-                                            topic.done ? "line-through text-slate-400" : "text-slate-600 font-medium"
-                                          }`}
-                                        >
-                                          {topic.name}
-                                        </span>
-                                      </label>
-                                      {activeTab === "my" && (
-                                        <button
-                                          onClick={() => handleDeleteTopic(course.id, chap.id, topic.id)}
-                                          className="text-slate-300 hover:text-red-600 opacity-80 group-hover:opacity-100 transition px-1"
-                                        >
-                                          ✕
-                                        </button>
-                                      )}
-                                    </div>
-                                  ))
-                                ) : (
-                                  <p className="text-[11px] text-slate-400 italic">কোনো টপিক যোগ করা হয়নি</p>
-                                )}
-
-                                {activeTab === "my" && (
-                                  <button
-                                    onClick={() =>
-                                      setAddTopicModal({
-                                        isOpen: true,
-                                        courseId: course.id,
-                                        chapterId: chap.id,
-                                        name: "",
-                                      })
-                                    }
-                                    className="mt-2 text-xs font-bold text-blue-600 hover:underline inline-block"
-                                  >
-                                    + টপিক যোগ করো
-                                  </button>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
 
