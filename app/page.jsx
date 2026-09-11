@@ -954,7 +954,7 @@ export default function Home() {
               </span>
             </div>
           )}
-          <h1 className="text-3xl md:text-4xl font-blueprint font-extrabold text-[#bde4e8] mb-2 tracking-tight">
+          <h1 className="text-3xl md:text-4xl font-blueprint font-extrabold text-[#de3267] mb-2 tracking-tight">
             🏗️ STUDY TRACKER
           </h1>
           <p className="text-slate-500 font-medium">
