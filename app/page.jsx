@@ -1084,7 +1084,7 @@ export default function Home() {
                       ></div>
                     </div>
 
-                    <div className="flex justify-between items-center text-xs text-slate-500 font-semibold pt-1 border-t border-slate-200/60">
+                    <div className={`flex justify-between items-center text-xs text-slate-500 font-semibold pt-1 border-t ${darkMode ? "border-[#3a4557]" : "border-slate-200/60"}`}>
                       <span>Best 3 CT Avg:</span>
                       <span className="text-cyan-700 font-bold bg-cyan-50 px-2.5 py-0.5 rounded-lg border border-cyan-100">
                         {member.avgCt} / 20
@@ -1322,29 +1322,29 @@ export default function Home() {
                           const doneCount = teacherChapters.filter((c) => c.done).length;
 
                           return (
-                            <div key={tKey} className="border border-cyan-200 rounded-xl overflow-hidden">
+                            <div key={tKey} className={`border rounded-xl overflow-hidden ${darkMode ? "border-[rgba(45,212,191,0.35)]" : "border-cyan-200"}`}>
                               {/* Teacher Section Header */}
                               <div
                                 onClick={() => toggleTeacherSection(sectionKey)}
-                                className="flex items-center justify-between gap-2 p-2.5 bg-cyan-50/70 hover:bg-cyan-50 cursor-pointer select-none"
+                                className={`flex items-center justify-between gap-2 p-2.5 cursor-pointer select-none ${darkMode ? "bg-[rgba(45,212,191,0.14)] hover:bg-[rgba(45,212,191,0.2)]" : "bg-cyan-50/70 hover:bg-cyan-50"}`}
                               >
-                                <span className="text-xs font-bold text-cyan-800 flex items-center gap-1.5 min-w-0">
+                                <span className={`text-xs font-bold flex items-center gap-1.5 min-w-0 ${darkMode ? "text-[#7dd3c8]" : "text-cyan-800"}`}>
                                   <span className="shrink-0">👨‍🏫</span>
                                   <span className="truncate">{getTeacherLabel(course, tKey)}</span>
                                 </span>
                                 <span className="flex items-center gap-2 shrink-0">
                                   {teacherChapters.length > 0 && (
-                                    <span className="text-[10px] font-bold text-cyan-700 bg-white px-2 py-0.5 rounded-full border border-cyan-200">
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${darkMode ? "text-[#5eeada] bg-[#1e2530] border-[rgba(45,212,191,0.35)]" : "text-cyan-700 bg-white border-cyan-200"}`}>
                                       {doneCount}/{teacherChapters.length}
                                     </span>
                                   )}
-                                  <span className="text-cyan-400 text-xs">{isSectionExpanded ? "▲" : "▼"}</span>
+                                  <span className={`text-xs ${darkMode ? "text-[#5eeada]" : "text-cyan-400"}`}>{isSectionExpanded ? "▲" : "▼"}</span>
                                 </span>
                               </div>
 
                               {/* Teacher Section Body */}
                               {isSectionExpanded && (
-                                <div className="p-2 space-y-2 bg-white">
+                                <div className={`p-2 space-y-2 ${darkMode ? "bg-[#1e2530]" : "bg-white"}`}>
                                   {teacherChapters.length === 0 ? (
                                     <p className="text-[11px] text-slate-400 italic px-1 py-1.5">
                                       এই শিক্ষকের কোনো চ্যাপ্টার যোগ করা হয়নি
@@ -1353,7 +1353,7 @@ export default function Home() {
                                     teacherChapters.map((chap) => (
                                       <div
                                         key={chap.id}
-                                        className="border border-slate-100 rounded-xl overflow-hidden bg-slate-50/50 hover:bg-slate-50 transition"
+                                        className={`border rounded-xl overflow-hidden transition ${darkMode ? "border-[#313a49] bg-[#202836] hover:bg-[#232c3a]" : "border-slate-100 bg-slate-50/50 hover:bg-slate-50"}`}
                                       >
                                         {/* Chapter Header Row */}
                                         <div
@@ -1377,7 +1377,7 @@ export default function Home() {
                                               {chap.name}
                                             </span>
                                             {chap.topics && chap.topics.length > 0 && (
-                                              <span className="text-[11px] font-bold text-slate-400 bg-slate-200/60 px-2 py-0.5 rounded-full shrink-0">
+                                              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 ${darkMode ? "text-[#a3abbb] bg-[#333e4e99]" : "text-slate-400 bg-slate-200/60"}`}>
                                                 {chap.topics.filter((t) => t.done).length}/{chap.topics.length}
                                               </span>
                                             )}
@@ -1413,7 +1413,7 @@ export default function Home() {
 
                                         {/* Expanded Topics Section */}
                                         {chap.expanded && (
-                                          <div className="bg-white p-3 border-t border-slate-100 pl-8 space-y-2">
+                                          <div className={`p-3 pl-8 space-y-2 border-t ${darkMode ? "bg-[#1e2530] border-[#313a49]" : "bg-white border-slate-100"}`}>
                                             {chap.topics && chap.topics.length > 0 ? (
                                               chap.topics.map((topic) => (
                                                 <div
@@ -1479,7 +1479,7 @@ export default function Home() {
                     </div>
 
                     {/* Marks Section */}
-                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col justify-between space-y-4">
+                    <div className={`p-4 rounded-2xl border flex flex-col justify-between space-y-4 ${darkMode ? "bg-[#202836] border-[#313a49]" : "bg-slate-50 border-slate-100"}`}>
                       <div>
                         <div className="flex justify-between items-center mb-2">
                           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -1492,7 +1492,7 @@ export default function Home() {
                             course.ctMarks.map((mark, i) => (
                               <div
                                 key={i}
-                                className="bg-white px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 shadow-sm flex items-center gap-1.5"
+                                className={`px-3 py-1.5 rounded-xl border text-xs font-bold shadow-sm flex items-center gap-1.5 ${darkMode ? "bg-[#1e2530] border-[#3a4557] text-[#d7dbe3]" : "bg-white border-slate-200 text-slate-700"}`}
                               >
                                 <span>
                                   CT-{i + 1}: <strong className="text-blue-600">{mark}</strong>
@@ -1532,27 +1532,27 @@ export default function Home() {
                                 value: "",
                               })
                             }
-                            className="w-full text-xs font-bold py-2 px-3 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl transition mb-3 shadow-sm"
+                            className={`w-full text-xs font-bold py-2 px-3 border rounded-xl transition mb-3 shadow-sm ${darkMode ? "bg-[#1e2530] hover:bg-[#29323f] border-[#3a4557] text-[#d7dbe3]" : "bg-white hover:bg-slate-100 border-slate-200 text-slate-700"}`}
                           >
                             + CT মার্কস যোগ করো ({course.ctMarks.length}/4)
                           </button>
                         )}
 
                         {/* Best 3 Average */}
-                        <div className="bg-blue-50/80 border border-blue-100 p-3.5 rounded-2xl text-center">
-                          <p className="text-[11px] font-bold uppercase tracking-wider text-blue-500">
+                        <div className={`border p-3.5 rounded-2xl text-center ${darkMode ? "bg-[rgba(99,102,241,0.14)] border-[rgba(99,102,241,0.25)]" : "bg-blue-50/80 border-blue-100"}`}>
+                          <p className={`text-[11px] font-bold uppercase tracking-wider ${darkMode ? "text-[#8b93f8]" : "text-blue-500"}`}>
                             Best 3 CT Average
                           </p>
-                          <p className="text-2xl font-black text-blue-600 mt-0.5">
+                          <p className={`text-2xl font-black mt-0.5 ${darkMode ? "text-[#93a0fa]" : "text-blue-600"}`}>
                             {best3Avg}
                           </p>
                         </div>
                       </div>
 
                       {/* Assignment, Attendance & Needed For A+ Section */}
-                      <div className="pt-3 border-t border-slate-200/60 space-y-2.5">
+                      <div className={`pt-3 border-t space-y-2.5 ${darkMode ? "border-[#3a4557]" : "border-slate-200/60"}`}>
                         {/* Assignment */}
-                        <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <div className={`flex items-center justify-between p-3 rounded-xl border shadow-sm ${darkMode ? "bg-[#1e2530] border-[#3a4557]" : "bg-white border-slate-200"}`}>
                           <div>
                             <span className="text-[10px] font-bold text-slate-400 uppercase block">
                               অ্যাসাইনমেন্ট
@@ -1572,7 +1572,7 @@ export default function Home() {
                                   value: course.assignmentMark !== null ? String(course.assignmentMark) : "",
                                 })
                               }
-                              className="text-xs font-bold px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition"
+                              className={`text-xs font-bold px-3 py-1.5 rounded-lg transition ${darkMode ? "bg-[#29323f] hover:bg-[#333e4e] text-[#d7dbe3]" : "bg-slate-100 hover:bg-slate-200 text-slate-700"}`}
                             >
                               {course.assignmentMark !== null ? "✏️ এডিট" : "+ যোগ করো"}
                             </button>
@@ -1580,7 +1580,7 @@ export default function Home() {
                         </div>
 
                         {/* Attendance */}
-                        <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <div className={`flex items-center justify-between p-3 rounded-xl border shadow-sm ${darkMode ? "bg-[#1e2530] border-[#3a4557]" : "bg-white border-slate-200"}`}>
                           <div>
                             <span className="text-[10px] font-bold text-slate-400 uppercase block">
                               অ্যাটেনডেন্স (উপস্থিতি)
@@ -1600,7 +1600,7 @@ export default function Home() {
                                   value: course.attendanceMark !== null ? String(course.attendanceMark) : "",
                                 })
                               }
-                              className="text-xs font-bold px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition"
+                              className={`text-xs font-bold px-3 py-1.5 rounded-lg transition ${darkMode ? "bg-[#29323f] hover:bg-[#333e4e] text-[#d7dbe3]" : "bg-slate-100 hover:bg-slate-200 text-slate-700"}`}
                             >
                               {course.attendanceMark !== null ? "✏️ এডিট" : "+ যোগ করো"}
                             </button>
@@ -1608,21 +1608,21 @@ export default function Home() {
                         </div>
 
                         {/* ✨ A+ (80) পেতে কত দরকার - ক্যালকুলেশন বক্স ✨ */}
-                        <div className="bg-emerald-50/80 border border-emerald-200 p-3.5 rounded-2xl text-center shadow-sm">
-                          <div className="flex items-center justify-between text-[10px] font-extrabold text-emerald-800 uppercase tracking-wider mb-1">
+                        <div className={`border p-3.5 rounded-2xl text-center shadow-sm ${darkMode ? "bg-[rgba(52,211,153,0.14)] border-[rgba(52,211,153,0.35)]" : "bg-emerald-50/80 border-emerald-200"}`}>
+                          <div className={`flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider mb-1 ${darkMode ? "text-[#86efc0]" : "text-emerald-800"}`}>
                             <span>🎯 A+ (80) পেতে দরকার</span>
-                            <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">
+                            <span className={`px-2 py-0.5 rounded-full font-bold ${darkMode ? "bg-[rgba(52,211,153,0.2)] text-[#86efc0]" : "bg-emerald-100 text-emerald-800"}`}>
                               ইনকোর্স: {currentTotalMarks.toFixed(1)}/40
                             </span>
                           </div>
 
-                          <div className="text-2xl font-black text-emerald-700 mt-1">
+                          <div className={`text-2xl font-black mt-1 ${darkMode ? "text-[#6de6ab]" : "text-emerald-700"}`}>
                             {neededForA <= 0 ? (
-                              <span className="text-emerald-600 text-xl">A+ নিশ্চিত! 🎉</span>
+                              <span className={`text-xl ${darkMode ? "text-[#6de6ab]" : "text-emerald-600"}`}>A+ নিশ্চিত! 🎉</span>
                             ) : (
                               <span>
                                 {neededForA.toFixed(1)}{" "}
-                                <span className="text-xs font-bold text-emerald-600">/ 60</span>
+                                <span className={`text-xs font-bold ${darkMode ? "text-[#6de6ab]" : "text-emerald-600"}`}>/ 60</span>
                               </span>
                             )}
                           </div>
@@ -2327,11 +2327,11 @@ export default function Home() {
       <div className="fixed bottom-3 left-3 z-40 flex items-center gap-2">
         <button
           onClick={() => setSettingsOpen(true)}
-          className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm border border-slate-200/70 rounded-full pl-2.5 pr-3.5 py-2 shadow-md hover:bg-white transition"
+          className={`flex items-center gap-1.5 backdrop-blur-sm border rounded-full pl-2.5 pr-3.5 py-2 shadow-md transition ${darkMode ? "bg-[rgba(30,37,48,0.9)] border-[#3a4557] hover:bg-[#1e2530]" : "bg-white/90 border-slate-200/70 hover:bg-white"}`}
           title="Settings"
         >
           <span className="text-base">⚙️</span>
-          <span className="text-[11px] font-bold text-slate-500">
+          <span className={`text-[11px] font-bold ${darkMode ? "text-[#a3abbb]" : "text-slate-500"}`}>
             {"\u09b8\u09c7\u099f\u09bf\u0982\u09b8"}
           </span>
         </button>
@@ -2339,19 +2339,19 @@ export default function Home() {
         <button
           onClick={handleUndo}
           disabled={!canUndo}
-          className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm border border-slate-200/70 rounded-full pl-2.5 pr-3.5 py-2 shadow-md hover:bg-white transition disabled:opacity-40 disabled:cursor-not-allowed"
+          className={`flex items-center gap-1.5 backdrop-blur-sm border rounded-full pl-2.5 pr-3.5 py-2 shadow-md transition disabled:opacity-40 disabled:cursor-not-allowed ${darkMode ? "bg-[rgba(30,37,48,0.9)] border-[#3a4557] hover:bg-[#1e2530]" : "bg-white/90 border-slate-200/70 hover:bg-white"}`}
           title={canUndo ? "আগের অবস্থায় ফিরিয়ে নাও" : "ফিরিয়ে নেওয়ার মতো কিছু নেই"}
         >
           <span className="text-base">↩️</span>
-          <span className="text-[11px] font-bold text-slate-500">{"Undo"}</span>
+          <span className={`text-[11px] font-bold ${darkMode ? "text-[#a3abbb]" : "text-slate-500"}`}>{"Undo"}</span>
         </button>
       </div>
 
       {/* Signature Watermark */}
       <div className="fixed bottom-3 right-3 z-40 pointer-events-none select-none">
-        <div className="flex items-center gap-1.5 bg-white/70 backdrop-blur-sm border border-slate-200/70 rounded-full pl-2 pr-3 py-1 shadow-sm">
+        <div className={`flex items-center gap-1.5 backdrop-blur-sm border rounded-full pl-2 pr-3 py-1 shadow-sm ${darkMode ? "bg-[rgba(30,37,48,0.7)] border-[#3a4557]" : "bg-white/70 border-slate-200/70"}`}>
           <span className="text-[13px]">🏗️</span>
-          <span className="text-[10px] font-semibold text-slate-400 tracking-wide">
+          <span className={`text-[10px] font-semibold tracking-wide ${darkMode ? "text-[#7c8598]" : "text-slate-400"}`}>
             Made by Akib · Civil'24, RUET
           </span>
         </div>
