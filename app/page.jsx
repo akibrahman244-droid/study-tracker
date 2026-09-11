@@ -38,6 +38,70 @@ export default function Home() {
   };
 
   const [activeTab, setActiveTab] = useState("my"); // "my", "friend", "group"
+  // --- সেটিংস: ডার্ক মোড, অ্যাপ খুললে কোর্স কেমন দেখাবে, সেটিংস প্যানেল ---
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [restoreLastState, setRestoreLastState] = useState(true); // true = যেভাবে রেখে গিয়েছিলে, false = সবসময় মিনিমাইজ
+  const [clearDataModal, setClearDataModal] = useState({ isOpen: false, step: "confirm", selected: {} });
+
+  // --- সাধারণ কনফার্মেশন মডাল (যেকোনো কিছু ডিলিট করার আগে দেখানো হবে) ---
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: "", message: "", onConfirm: null });
+  const openConfirmModal = (title, message, onConfirm) => {
+    setConfirmModal({ isOpen: true, title, message, onConfirm });
+  };
+  const closeConfirmModal = () => setConfirmModal({ isOpen: false, title: "", message: "", onConfirm: null });
+  const handleConfirmModalYes = () => {
+    if (confirmModal.onConfirm) confirmModal.onConfirm();
+    closeConfirmModal();
+  };
+
+  // --- কোর্স কার্ডের থ্রি-ডট মেনু (পিন/এডিট/ডিলিট একসাথে) ---
+  const [openCourseMenuId, setOpenCourseMenuId] = useState(null);
+
+  // --- Undo সিস্টেম: myCourses/friendCourses এ যেকোনো পরিবর্তনের আগের অবস্থা মনে রাখা ---
+  const undoStackRef = useRef([]);
+  const [canUndo, setCanUndo] = useState(false);
+  const pushUndoSnapshot = () => {
+    undoStackRef.current.push({ myCourses, friendCourses });
+    if (undoStackRef.current.length > 25) undoStackRef.current.shift();
+    setCanUndo(true);
+  };
+  const updateMyCourses = (newList) => {
+    pushUndoSnapshot();
+    setMyCourses(newList);
+  };
+  const updateFriendCourses = (newList) => {
+    pushUndoSnapshot();
+    setFriendCourses(newList);
+  };
+  const handleUndo = () => {
+    const stack = undoStackRef.current;
+    if (stack.length === 0) return;
+    const last = stack.pop();
+    setMyCourses(last.myCourses);
+    setFriendCourses(last.friendCourses);
+    setCanUndo(stack.length > 0);
+  };
+
+  // ব্রাউজারে সেভ করা থাকলে সাথে সাথে অ্যাপ্লাই করো (সার্ভার থেকে ডেটা আসার আগেই), যাতে ফ্ল্যাশ না হয়
+  useEffect(() => {
+    const savedDark = localStorage.getItem("studyTracker:darkMode");
+    if (savedDark !== null) setDarkMode(savedDark === "true");
+    const savedRestore = localStorage.getItem("studyTracker:restoreLastState");
+    if (savedRestore !== null) setRestoreLastState(savedRestore === "true");
+  }, []);
+
+  const handleToggleDarkMode = () => {
+    const next = !darkMode;
+    setDarkMode(next);
+    localStorage.setItem("studyTracker:darkMode", String(next));
+  };
+
+  const handleSetRestoreLastState = (value) => {
+    setRestoreLastState(value);
+    localStorage.setItem("studyTracker:restoreLastState", String(value));
+  };
+
 
   // ক্রেডিট অনুযায়ী সাজানোর হেল্পার ফাংশন (পিন করা কোর্স সবার উপরে, এরপর বেশি ক্রেডিট)
   const sortCoursesWithPin = (list) => {
@@ -75,10 +139,26 @@ export default function Home() {
         if (res.ok) {
           const data = await res.json();
           if (data) {
-            setMyCourses(data.myCourses || []);
-            setFriendCourses(data.friendCourses || []);
+            const loadedRestore = data.settings?.restoreLastState ?? true;
+            const applyCardState = (list) =>
+              (list || []).map((c) => ({
+                ...c,
+                cardExpanded: loadedRestore ? c.cardExpanded !== false : false,
+              }));
+            setMyCourses(applyCardState(data.myCourses));
+            setFriendCourses(applyCardState(data.friendCourses));
             setRooms(data.rooms || []);
             setSelectedRoomId(data.selectedRoomId ?? null);
+            if (data.settings) {
+              if (typeof data.settings.darkMode === "boolean") {
+                setDarkMode(data.settings.darkMode);
+                localStorage.setItem("studyTracker:darkMode", String(data.settings.darkMode));
+              }
+              if (typeof data.settings.restoreLastState === "boolean") {
+                setRestoreLastState(data.settings.restoreLastState);
+                localStorage.setItem("studyTracker:restoreLastState", String(data.settings.restoreLastState));
+              }
+            }
           } else {
             setMyCourses([]);
             setFriendCourses([]);
@@ -95,7 +175,13 @@ export default function Home() {
 
   useEffect(() => {
     if (!dataLoaded || !currentEmailRef.current) return;
-    const payload = { myCourses, friendCourses, rooms, selectedRoomId };
+    const payload = {
+      myCourses,
+      friendCourses,
+      rooms,
+      selectedRoomId,
+      settings: { darkMode, restoreLastState },
+    };
     setIsSyncing(true);
     const t = setTimeout(() => {
       fetch("/api/data", {
@@ -107,7 +193,7 @@ export default function Home() {
         .finally(() => setIsSyncing(false));
     }, 700);
     return () => clearTimeout(t);
-  }, [myCourses, friendCourses, rooms, selectedRoomId, dataLoaded]);
+  }, [myCourses, friendCourses, rooms, selectedRoomId, dataLoaded, darkMode, restoreLastState]);
 
   // Modals State
   const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
@@ -185,8 +271,8 @@ export default function Home() {
 
     const sorted = sortCoursesWithPin(updated);
 
-    if (activeTab === "my") setMyCourses(sorted);
-    else setFriendCourses(sorted);
+    if (activeTab === "my") updateMyCourses(sorted);
+    else updateFriendCourses(sorted);
   };
 
   const handleOpenRenameCourse = (course) => {
@@ -217,8 +303,59 @@ export default function Home() {
 
   const handleDeleteCourse = (courseId) => {
     if (activeTab !== "my") return;
-    const updated = myCourses.filter((c) => c.id !== courseId);
-    setMyCourses(updated);
+    const target = myCourses.find((c) => c.id === courseId);
+    openConfirmModal(
+      "🗑️ কোর্স ডিলিট করো",
+      `তুমি কি নিশ্চিত "${target?.name || "এই কোর্সটি"}" ডিলিট করতে চাও? পরে চাইলে Undo বাটন দিয়ে ফিরিয়ে আনতে পারবে।`,
+      () => {
+        const updated = myCourses.filter((c) => c.id !== courseId);
+        updateMyCourses(updated);
+      }
+    );
+  };
+
+  // --- সব ডেটা মুছে ফেলা (Clear All Data) ---
+  const handleOpenClearDataModal = () => {
+    setClearDataModal({ isOpen: true, step: "confirm", selected: {} });
+  };
+
+  const handleClearAllCourses = () => {
+    openConfirmModal(
+      "🗑️ সব কোর্স ডিলিট করো",
+      "তুমি কি নিশ্চিত? তোমার সব কোর্স চিরতরে মুছে যাবে! (Undo বাটন দিয়ে ফিরিয়ে আনা যাবে)",
+      () => {
+        updateMyCourses([]);
+        setClearDataModal({ isOpen: false, step: "confirm", selected: {} });
+      }
+    );
+  };
+
+  const handleGoToSelectDelete = () => {
+    setClearDataModal({ isOpen: true, step: "select", selected: {} });
+  };
+
+  const handleToggleSelectCourseForDelete = (courseId) => {
+    setClearDataModal((prev) => ({
+      ...prev,
+      selected: { ...prev.selected, [courseId]: !prev.selected[courseId] },
+    }));
+  };
+
+  const handleDeleteSelectedCourses = () => {
+    const idsToDelete = Object.keys(clearDataModal.selected).filter((id) => clearDataModal.selected[id]);
+    if (idsToDelete.length === 0) {
+      alert("অন্তত একটা কোর্স সিলেক্ট করো!");
+      return;
+    }
+    openConfirmModal(
+      "🗑️ নির্বাচিত কোর্স ডিলিট করো",
+      `নির্বাচিত ${idsToDelete.length} টা কোর্স মুছে ফেলতে চাও? (Undo বাটন দিয়ে ফিরিয়ে আনা যাবে)`,
+      () => {
+        const updated = myCourses.filter((c) => !idsToDelete.includes(String(c.id)));
+        updateMyCourses(updated);
+        setClearDataModal({ isOpen: false, step: "confirm", selected: {} });
+      }
+    );
   };
 
   const handleMoveCourse = (index, direction) => {
@@ -232,16 +369,16 @@ export default function Home() {
     updated[index] = updated[targetIndex];
     updated[targetIndex] = temp;
 
-    if (activeTab === "my") setMyCourses(updated);
-    else setFriendCourses(updated);
+    if (activeTab === "my") updateMyCourses(updated);
+    else updateFriendCourses(updated);
   };
 
   const handleSortByCredit = () => {
     const targetCourses = activeTab === "my" ? myCourses : friendCourses;
     const sorted = sortCoursesWithPin(targetCourses);
 
-    if (activeTab === "my") setMyCourses(sorted);
-    else setFriendCourses(sorted);
+    if (activeTab === "my") updateMyCourses(sorted);
+    else updateFriendCourses(sorted);
   };
 
   // --- Chapter Expand/Collapse ---
@@ -259,6 +396,15 @@ export default function Home() {
       return c;
     });
 
+    if (activeTab === "my") setMyCourses(updated);
+    else setFriendCourses(updated);
+  };
+
+  // --- কোর্স কার্ড মিনিমাইজ/এক্সপান্ড টগল ---
+  const toggleCourseCard = (courseId) => {
+    const updated = currentCourses.map((c) =>
+      c.id === courseId ? { ...c, cardExpanded: c.cardExpanded === false ? true : false } : c
+    );
     if (activeTab === "my") setMyCourses(updated);
     else setFriendCourses(updated);
   };
@@ -361,6 +507,7 @@ export default function Home() {
       teacher1: teacher1Input.trim(),
       teacher2: teacher2Input.trim(),
       isPinned: false,
+      cardExpanded: true,
       chapters:
         validChapters.length > 0
           ? validChapters
@@ -371,7 +518,7 @@ export default function Home() {
     };
 
     const updatedList = sortCoursesWithPin([...myCourses, newCourse]);
-    setMyCourses(updatedList);
+    updateMyCourses(updatedList);
     setIsCourseModalOpen(false);
   };
 
@@ -399,7 +546,7 @@ export default function Home() {
       return c;
     });
 
-    setMyCourses(updated);
+    updateMyCourses(updated);
     setAddChapterModal({ isOpen: false, courseId: null, name: "", teacher: "teacher1" });
   };
 
@@ -421,7 +568,7 @@ export default function Home() {
       return c;
     });
 
-    setMyCourses(updated);
+    updateMyCourses(updated);
     setAddTopicModal({ isOpen: false, courseId: null, chapterId: null, name: "" });
   };
 
@@ -442,7 +589,7 @@ export default function Home() {
       return c;
     });
 
-    setMyCourses(updated);
+    updateMyCourses(updated);
     setEditChapterModal({ isOpen: false, courseId: null, chapterId: null, name: "", teacher: "teacher1" });
   };
 
@@ -450,33 +597,47 @@ export default function Home() {
     e.stopPropagation();
     if (activeTab !== "my") return;
 
-    const updated = myCourses.map((c) => {
-      if (c.id === courseId) {
-        return { ...c, chapters: c.chapters.filter((ch) => ch.id !== chapterId) };
+    const course = myCourses.find((c) => c.id === courseId);
+    const chapter = course?.chapters.find((ch) => ch.id === chapterId);
+    openConfirmModal(
+      "🗑️ চ্যাপ্টার ডিলিট করো",
+      `তুমি কি নিশ্চিত "${chapter?.name || "এই চ্যাপ্টার"}" ডিলিট করতে চাও? এর ভেতরের সব টপিকও মুছে যাবে।`,
+      () => {
+        const updated = myCourses.map((c) => {
+          if (c.id === courseId) {
+            return { ...c, chapters: c.chapters.filter((ch) => ch.id !== chapterId) };
+          }
+          return c;
+        });
+        updateMyCourses(updated);
       }
-      return c;
-    });
-    setMyCourses(updated);
+    );
   };
 
   const handleDeleteTopic = (courseId, chapterId, topicId) => {
     if (activeTab !== "my") return;
 
-    const updated = myCourses.map((c) => {
-      if (c.id === courseId) {
-        const updatedChapters = c.chapters.map((ch) => {
-          if (ch.id === chapterId) {
-            const updatedTopics = ch.topics.filter((t) => t.id !== topicId);
-            const allDone = updatedTopics.length > 0 && updatedTopics.every((t) => t.done);
-            return { ...ch, topics: updatedTopics, done: updatedTopics.length > 0 ? allDone : ch.done };
+    openConfirmModal(
+      "🗑️ টপিক ডিলিট করো",
+      "তুমি কি নিশ্চিত এই টপিকটি ডিলিট করতে চাও?",
+      () => {
+        const updated = myCourses.map((c) => {
+          if (c.id === courseId) {
+            const updatedChapters = c.chapters.map((ch) => {
+              if (ch.id === chapterId) {
+                const updatedTopics = ch.topics.filter((t) => t.id !== topicId);
+                const allDone = updatedTopics.length > 0 && updatedTopics.every((t) => t.done);
+                return { ...ch, topics: updatedTopics, done: updatedTopics.length > 0 ? allDone : ch.done };
+              }
+              return ch;
+            });
+            return { ...c, chapters: updatedChapters };
           }
-          return ch;
+          return c;
         });
-        return { ...c, chapters: updatedChapters };
+        updateMyCourses(updated);
       }
-      return c;
-    });
-    setMyCourses(updated);
+    );
   };
 
   // --- Marks Save Logic ---
@@ -632,51 +793,67 @@ export default function Home() {
 
   return (
     <div
-      className="min-h-screen bg-[#EAE7DC] p-4 md:p-8 text-slate-800 font-sans"
+      className={`min-h-screen ${darkMode ? "dark-theme" : ""} p-4 md:p-8 text-slate-800 font-sans`}
       style={{
-        backgroundImage:
-          "linear-gradient(rgba(30,64,90,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(30,64,90,0.07) 1px, transparent 1px)",
+        backgroundColor: darkMode ? "#151a22" : "#EAE7DC",
+        backgroundImage: darkMode
+          ? "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)"
+          : "linear-gradient(rgba(30,64,90,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(30,64,90,0.07) 1px, transparent 1px)",
         backgroundSize: "26px 26px",
       }}
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&display=swap');
         .font-blueprint { font-family: 'Oswald', sans-serif; letter-spacing: 0.02em; }
+
+        /* ---- Dark Mode Overrides ---- */
+        .dark-theme .bg-white { background-color: #1e2530 !important; }
+        .dark-theme .bg-slate-50 { background-color: #202836 !important; }
+        .dark-theme .bg-slate-50\/50 { background-color: #202836 !important; }
+        .dark-theme .bg-slate-100 { background-color: #29323f !important; }
+        .dark-theme .bg-slate-200 { background-color: #333e4e !important; }
+        .dark-theme .bg-slate-200\/60 { background-color: #333e4e99 !important; }
+        .dark-theme .text-slate-800 { color: #e9ecf2 !important; }
+        .dark-theme .text-slate-700 { color: #d7dbe3 !important; }
+        .dark-theme .text-slate-600 { color: #c3c9d4 !important; }
+        .dark-theme .text-slate-500 { color: #a3abbb !important; }
+        .dark-theme .text-slate-400 { color: #7c8598 !important; }
+        .dark-theme .text-slate-300 { color: #626c7e !important; }
+        .dark-theme .border-slate-100 { border-color: #313a49 !important; }
+        .dark-theme .border-slate-200 { border-color: #3a4557 !important; }
+        .dark-theme .border-slate-200\/60 { border-color: #3a4557 !important; }
+        .dark-theme .border-slate-200\/70 { border-color: #3a4557 !important; }
+        .dark-theme .border-slate-300 { border-color: #48546a !important; }
+        .dark-theme .bg-blue-50 { background-color: rgba(37,99,235,0.18) !important; }
+        .dark-theme .bg-blue-50\/80 { background-color: rgba(37,99,235,0.18) !important; }
+        .dark-theme .bg-blue-100 { background-color: rgba(37,99,235,0.25) !important; }
+        .dark-theme .bg-cyan-50 { background-color: rgba(8,145,178,0.18) !important; }
+        .dark-theme .bg-cyan-50\/70 { background-color: rgba(8,145,178,0.18) !important; }
+        .dark-theme .bg-cyan-100 { background-color: rgba(8,145,178,0.25) !important; }
+        .dark-theme .bg-emerald-50\/80 { background-color: rgba(5,150,105,0.18) !important; }
+        .dark-theme .bg-emerald-100 { background-color: rgba(5,150,105,0.25) !important; }
+        .dark-theme .bg-amber-100 { background-color: rgba(217,119,6,0.22) !important; }
+        .dark-theme .bg-red-50 { background-color: rgba(220,38,38,0.18) !important; }
+        .dark-theme .bg-red-100 { background-color: rgba(220,38,38,0.25) !important; }
+        .dark-theme .bg-slate-900\/40 { background-color: rgba(0,0,0,0.6) !important; }
+        .dark-theme input, .dark-theme select { background-color: #202836 !important; color: #e9ecf2 !important; }
       `}</style>
       <div className="max-w-4xl mx-auto">
         {/* Title Header */}
         <div className="text-center mb-6 relative">
-          <div className="flex items-center justify-center gap-2 mb-1">
-            {user.image ? (
-              <img
-                src={user.image}
-                alt={user.name}
-                className="w-7 h-7 rounded-full object-cover border border-blue-200"
-              />
-            ) : (
-              <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 text-xs font-extrabold flex items-center justify-center">
-                {user.name.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <span className="text-xs font-semibold text-slate-500">{user.email}</span>
-            {isSyncing && (
+          {isSyncing && (
+            <div className="flex items-center justify-center gap-2 mb-1">
               <span className="text-[10px] font-bold text-blue-500 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></span>
-                সেভ হচ্ছে...
+                {"\u09b8\u09c7\u09ad \u09b9\u099a\u09cd\u099b\u09c7..."}
               </span>
-            )}
-            <button
-              onClick={handleLogout}
-              className="text-[11px] font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-full transition"
-            >
-              লগ-আউট
-            </button>
-          </div>
+            </div>
+          )}
           <h1 className="text-3xl md:text-4xl font-blueprint font-extrabold text-[#1E405A] mb-2 tracking-tight">
             🏗️ STUDY TRACKER
           </h1>
           <p className="text-slate-500 font-medium">
-            গ্রুপ, বন্ধু এবং নিজের পড়ার অগ্রগতি ও সিলেবাস ট্র্যাক করো
+            {"\u0997\u09cd\u09b0\u09c1\u09aa, \u09ac\u09a8\u09cd\u09a7\u09c1 \u098f\u09ac\u0982 \u09a8\u09bf\u099c\u09c7\u09b0 \u09aa\u09dc\u09be\u09b0 \u0985\u0997\u09cd\u09b0\u0997\u09a4\u09bf \u0993 \u09b8\u09bf\u09b2\u09c7\u09ac\u09be\u09b8 \u099f\u09cd\u09b0\u09cd\u09af\u09be\u0995 \u0995\u09b0\u09cb"}
           </p>
         </div>
 
@@ -887,6 +1064,7 @@ export default function Home() {
               const attendVal = course.attendanceMark !== null ? Number(course.attendanceMark) : 0;
               const currentTotalMarks = ctVal + assignVal + attendVal;
               const neededForA = 80 - currentTotalMarks;
+              const isCardExpanded = course.cardExpanded !== false;
 
               return (
                 <div
@@ -941,46 +1119,91 @@ export default function Home() {
                         </button>
                       </div>
 
-                      <button
-                        onClick={() => handleTogglePin(course.id)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition flex items-center gap-1 ${
-                          course.isPinned
-                            ? "bg-amber-500 text-white border-amber-600 shadow-sm"
-                            : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                        }`}
-                        title={course.isPinned ? "আনপিন করো" : "উপরে পিন করো"}
-                      >
-                        📍 {course.isPinned ? "আনপিন" : "পিন"}
-                      </button>
+                      {/* থ্রি-ডট মেনু: পিন, এডিট, ডিলিট একসাথে */}
+                      <div className="relative z-50">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenCourseMenuId(openCourseMenuId === course.id ? null : course.id);
+                          }}
+                          title="আরও অপশন"
+                          className={`w-8 h-8 flex items-center justify-center rounded-xl border transition text-base font-black ${
+                            openCourseMenuId === course.id
+                              ? "bg-blue-50 text-blue-600 border-blue-200"
+                              : "bg-slate-50 text-slate-500 hover:text-blue-600 hover:bg-blue-50 border-slate-200"
+                          }`}
+                        >
+                          ⋮
+                        </button>
 
-                      {activeTab === "my" && (
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => handleOpenRenameCourse(course)}
-                            title="কোর্সের নাম পরিবর্তন করো"
-                            className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-50 text-slate-500 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 transition"
+                        {openCourseMenuId === course.id && (
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            className="absolute right-0 top-full mt-1.5 w-44 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-50"
                           >
-                            ✏️
-                          </button>
-                          <button
-                            onClick={() => handleDeleteCourse(course.id)}
-                            title="কোর্স ডিলিট করো"
-                            className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-50 text-slate-500 hover:text-red-600 hover:bg-red-50 border border-slate-200 transition"
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      )}
+                            <button
+                              onClick={() => {
+                                handleTogglePin(course.id);
+                                setOpenCourseMenuId(null);
+                              }}
+                              className="w-full text-left px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-amber-50 hover:text-amber-700 flex items-center gap-2"
+                            >
+                              📍 {course.isPinned ? "আনপিন করো" : "পিন করো"}
+                            </button>
+                            {activeTab === "my" && (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    handleOpenRenameCourse(course);
+                                    setOpenCourseMenuId(null);
+                                  }}
+                                  className="w-full text-left px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2"
+                                >
+                                  ✏️ এডিট করো
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setOpenCourseMenuId(null);
+                                    handleDeleteCourse(course.id);
+                                  }}
+                                  className="w-full text-left px-3.5 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2"
+                                >
+                                  🗑️ ডিলিট করো
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
 
-                      <div className="text-right ml-2 hidden sm:block">
+                      <div className="text-right ml-2">
                         <span className="text-2xl font-black text-blue-600">
                           {progressPercent}%
                         </span>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase">কমপ্লিট</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">
+                          {"\u0995\u09ae\u09aa\u09cd\u09b2\u09bf\u099f"}
+                        </p>
+                        {!isCardExpanded && (
+                          <p className="text-[10px] text-emerald-600 font-bold whitespace-nowrap">
+                            {neededForA <= 0
+                              ? "A+ \u09a8\u09bf\u09b6\u09cd\u099a\u09bf\u09a4! \ud83c\udf89"
+                              : `A+ \u09aa\u09c7\u09a4\u09c7: ${neededForA.toFixed(1)}`}
+                          </p>
+                        )}
                       </div>
+
+                      <button
+                        onClick={() => toggleCourseCard(course.id)}
+                        title={isCardExpanded ? "\u09ae\u09bf\u09a8\u09bf\u09ae\u09be\u0987\u099c \u0995\u09b0\u09cb" : "\u098f\u0995\u09cd\u09b8\u09aa\u09be\u09a8\u09cd\u09a1 \u0995\u09b0\u09cb"}
+                        className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-50 text-slate-500 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 transition shrink-0"
+                      >
+                        {isCardExpanded ? "\u25b2" : "\u25bc"}
+                      </button>
                     </div>
                   </div>
 
+                  {isCardExpanded && (
+                  <>
                   {/* Progress Bar */}
                   <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden mb-6">
                     <div
@@ -1331,6 +1554,8 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
+                  </>
+                  )}
                 </div>
               );
             })}
@@ -1783,6 +2008,262 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* 9. Settings Modal */}
+      {settingsOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 space-y-5 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xl leading-none">🏗️</span>
+                  <span className="text-xl font-black uppercase tracking-wide text-blue-950">
+                    Study Tracker
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 mt-1 ml-0.5">
+                  <span className="text-[10px] text-slate-400 italic font-semibold tracking-wide">
+                    by Akib
+                  </span>
+                  <span className="text-slate-300 text-[10px]">•</span>
+                  <h3 className="text-xs font-bold text-slate-500">
+                    {"\u2699\ufe0f \u09b8\u09c7\u099f\u09bf\u0982\u09b8"}
+                  </h3>
+                </div>
+              </div>
+              <button
+                onClick={() => setSettingsOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-100 border border-slate-200"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Dark Mode Toggle */}
+            <div className="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+              <div>
+                <span className="text-sm font-bold text-slate-800 block">
+                  {"\ud83c\udf19 \u09a1\u09be\u09b0\u09cd\u0995 \u09ae\u09cb\u09a1"}
+                </span>
+                <span className="text-[11px] text-slate-400 font-medium">
+                  {"\u09b0\u09be\u09a4\u09c7 \u0985\u09cd\u09af\u09be\u09aa \u09ac\u09cd\u09af\u09ac\u09b9\u09be\u09b0\u09c7\u09b0 \u099c\u09a8\u09cd\u09af \u0995\u09be\u099c\u09c7 \u09b2\u09be\u0997\u09c7"}
+                </span>
+              </div>
+              <button
+                onClick={handleToggleDarkMode}
+                className={`w-12 h-7 rounded-full transition relative shrink-0 ${
+                  darkMode ? "bg-blue-600" : "bg-slate-300"
+                }`}
+              >
+                <span
+                  className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-all ${
+                    darkMode ? "left-6" : "left-1"
+                  }`}
+                ></span>
+              </button>
+            </div>
+
+            {/* Reopen Behavior */}
+            <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2.5">
+              <span className="text-sm font-bold text-slate-800 block">
+                {"\ud83d\udcf1 \u0985\u09cd\u09af\u09be\u09aa \u0996\u09c1\u09b2\u09b2\u09c7 \u0995\u09cb\u09b0\u09cd\u09b8 \u0995\u09c7\u09ae\u09a8 \u09a6\u09c7\u0996\u09be\u09ac\u09c7"}
+              </span>
+              <div className="flex bg-white rounded-xl p-1 gap-1 border border-slate-200">
+                <button
+                  onClick={() => handleSetRestoreLastState(true)}
+                  className={`flex-1 py-2 rounded-lg text-xs font-bold transition ${
+                    restoreLastState ? "bg-blue-600 text-white shadow-sm" : "text-slate-500"
+                  }`}
+                >
+                  {"\u09af\u09c7\u09ad\u09be\u09ac\u09c7 \u09b0\u09c7\u0996\u09c7 \u0997\u09bf\u09df\u09c7\u099b\u09bf\u09b2\u09c7"}
+                </button>
+                <button
+                  onClick={() => handleSetRestoreLastState(false)}
+                  className={`flex-1 py-2 rounded-lg text-xs font-bold transition ${
+                    !restoreLastState ? "bg-blue-600 text-white shadow-sm" : "text-slate-500"
+                  }`}
+                >
+                  {"\u09b8\u09ac\u09b8\u09ae\u09df \u09ae\u09bf\u09a8\u09bf\u09ae\u09be\u0987\u099c"}
+                </button>
+              </div>
+            </div>
+
+            {/* Clear All Data */}
+            <button
+              onClick={handleOpenClearDataModal}
+              className="w-full text-left flex items-center justify-between bg-red-50 hover:bg-red-100 p-3.5 rounded-2xl border border-red-200 transition"
+            >
+              <span className="text-sm font-bold text-red-600 flex items-center gap-2">
+                {"\ud83d\uddd1\ufe0f \u09b8\u09ac \u09a1\u09c7\u099f\u09be \u09ae\u09c1\u099b\u09c7 \u09ab\u09c7\u09b2\u09cb"}
+              </span>
+              <span className="text-red-400">›</span>
+            </button>
+
+            {/* Account Section */}
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5 min-w-0">
+                {user.image ? (
+                  <img
+                    src={user.image}
+                    alt={user.name}
+                    className="w-9 h-9 rounded-full object-cover border border-blue-200 shrink-0"
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 text-xs font-extrabold flex items-center justify-center shrink-0">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-slate-800 truncate">{user.name}</p>
+                  <p className="text-[11px] text-slate-400 truncate">{user.email}</p>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="text-[11px] font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition shrink-0"
+              >
+                {"\u09b2\u0997-\u0986\u0989\u099f"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 10. Clear Data Modal */}
+      {clearDataModal.isOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 space-y-4 max-h-[85vh] overflow-y-auto">
+            {clearDataModal.step === "confirm" ? (
+              <>
+                <h3 className="text-base font-bold text-slate-800">
+                  {"\ud83d\uddd1\ufe0f \u09b8\u09ac \u09a1\u09c7\u099f\u09be \u09ae\u09c1\u099b\u09c7 \u09ab\u09c7\u09b2\u09be"}
+                </h3>
+                <p className="text-sm text-slate-500 font-medium">
+                  {"\u09a4\u09c1\u09ae\u09bf \u0995\u09bf \u09b8\u09ac \u0995\u09cb\u09b0\u09cd\u09b8 \u09a1\u09bf\u09b2\u09bf\u099f \u0995\u09b0\u09a4\u09c7 \u099a\u09be\u0993, \u09a8\u09be\u0995\u09bf \u09a8\u09bf\u09b0\u09cd\u09a6\u09bf\u09b7\u09cd\u099f \u0995\u09bf\u099b\u09c1 \u0995\u09cb\u09b0\u09cd\u09b8 \u09ac\u09c7\u099b\u09c7 \u09a1\u09bf\u09b2\u09bf\u099f \u0995\u09b0\u09a4\u09c7 \u099a\u09be\u0993?"}
+                </p>
+                <div className="flex flex-col gap-2 pt-2">
+                  <button
+                    onClick={handleClearAllCourses}
+                    className="w-full px-4 py-2.5 rounded-xl text-xs font-bold bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-100"
+                  >
+                    {"\u09b8\u09ac \u0995\u09cb\u09b0\u09cd\u09b8 \u09a1\u09bf\u09b2\u09bf\u099f \u0995\u09b0\u09cb"}
+                  </button>
+                  <button
+                    onClick={handleGoToSelectDelete}
+                    className="w-full px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700"
+                  >
+                    {"\u09a8\u09bf\u09b0\u09cd\u09a6\u09bf\u09b7\u09cd\u099f \u0995\u09bf\u099b\u09c1 \u09ac\u09c7\u099b\u09c7 \u09a8\u09be\u0993"}
+                  </button>
+                  <button
+                    onClick={() => setClearDataModal({ isOpen: false, step: "confirm", selected: {} })}
+                    className="w-full px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
+                  >
+                    {"\u09ac\u09be\u09a4\u09bf\u09b2"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="text-base font-bold text-slate-800">
+                  {"\u0995\u09cb\u09b0\u09cd\u09b8 \u09ac\u09c7\u099b\u09c7 \u09a8\u09be\u0993"}
+                </h3>
+                {myCourses.length === 0 ? (
+                  <p className="text-sm text-slate-400">
+                    {"\u0995\u09cb\u09a8\u09cb \u0995\u09cb\u09b0\u09cd\u09b8 \u09a8\u09c7\u0987"}
+                  </p>
+                ) : (
+                  <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                    {myCourses.map((c) => (
+                      <label
+                        key={c.id}
+                        className="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={!!clearDataModal.selected[String(c.id)]}
+                          onChange={() => handleToggleSelectCourseForDelete(String(c.id))}
+                          className="w-4 h-4 accent-red-600 rounded cursor-pointer shrink-0"
+                        />
+                        <span className="text-sm font-semibold text-slate-700 truncate">{c.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    onClick={() => setClearDataModal({ isOpen: false, step: "confirm", selected: {} })}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
+                  >
+                    {"\u09ac\u09be\u09a4\u09bf\u09b2"}
+                  </button>
+                  <button
+                    onClick={handleDeleteSelectedCourses}
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    {"\u09a1\u09bf\u09b2\u09bf\u099f \u0995\u09b0\u09cb"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* মেনুর বাইরে ক্লিক করলে থ্রি-ডট মেনু বন্ধ হয়ে যাবে */}
+      {openCourseMenuId !== null && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setOpenCourseMenuId(null)}
+        />
+      )}
+
+      {/* 11. সাধারণ কনফার্মেশন মডাল (যেকোনো ডিলিটের আগে দেখানো হয়) */}
+      {confirmModal.isOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 space-y-4">
+            <h3 className="text-base font-bold text-slate-800">{confirmModal.title}</h3>
+            <p className="text-sm text-slate-500 font-medium">{confirmModal.message}</p>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={closeConfirmModal}
+                className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
+              >
+                {"বাতিল"}
+              </button>
+              <button
+                onClick={handleConfirmModalYes}
+                className="px-4 py-2.5 rounded-xl text-xs font-bold bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-100"
+              >
+                {"হ্যাঁ, ডিলিট করো"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings & Undo Buttons (bottom-left) */}
+      <div className="fixed bottom-3 left-3 z-40 flex items-center gap-2">
+        <button
+          onClick={() => setSettingsOpen(true)}
+          className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm border border-slate-200/70 rounded-full pl-2.5 pr-3.5 py-2 shadow-md hover:bg-white transition"
+          title="Settings"
+        >
+          <span className="text-base">⚙️</span>
+          <span className="text-[11px] font-bold text-slate-500">
+            {"\u09b8\u09c7\u099f\u09bf\u0982\u09b8"}
+          </span>
+        </button>
+
+        <button
+          onClick={handleUndo}
+          disabled={!canUndo}
+          className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm border border-slate-200/70 rounded-full pl-2.5 pr-3.5 py-2 shadow-md hover:bg-white transition disabled:opacity-40 disabled:cursor-not-allowed"
+          title={canUndo ? "আগের অবস্থায় ফিরিয়ে নাও" : "ফিরিয়ে নেওয়ার মতো কিছু নেই"}
+        >
+          <span className="text-base">↩️</span>
+          <span className="text-[11px] font-bold text-slate-500">{"Undo"}</span>
+        </button>
+      </div>
 
       {/* Signature Watermark */}
       <div className="fixed bottom-3 right-3 z-40 pointer-events-none select-none">
