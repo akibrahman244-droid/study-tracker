@@ -824,20 +824,77 @@ export default function Home() {
         .dark-theme .border-slate-200\/60 { border-color: #3a4557 !important; }
         .dark-theme .border-slate-200\/70 { border-color: #3a4557 !important; }
         .dark-theme .border-slate-300 { border-color: #48546a !important; }
-        .dark-theme .bg-blue-50 { background-color: rgba(37,99,235,0.18) !important; }
-        .dark-theme .bg-blue-50\/80 { background-color: rgba(37,99,235,0.18) !important; }
-        .dark-theme .bg-blue-100 { background-color: rgba(37,99,235,0.25) !important; }
-        .dark-theme .bg-cyan-50 { background-color: rgba(8,145,178,0.18) !important; }
-        .dark-theme .bg-cyan-50\/70 { background-color: rgba(8,145,178,0.18) !important; }
-        .dark-theme .bg-cyan-100 { background-color: rgba(8,145,178,0.25) !important; }
-        .dark-theme .bg-emerald-50\/80 { background-color: rgba(5,150,105,0.18) !important; }
-        .dark-theme .bg-emerald-100 { background-color: rgba(5,150,105,0.25) !important; }
-        .dark-theme .bg-amber-100 { background-color: rgba(217,119,6,0.22) !important; }
-        .dark-theme .bg-red-50 { background-color: rgba(220,38,38,0.18) !important; }
-        .dark-theme .bg-red-100 { background-color: rgba(220,38,38,0.25) !important; }
         .dark-theme .bg-slate-900\/40 { background-color: rgba(0,0,0,0.6) !important; }
-        .dark-theme .text-blue-950 { color: #dbeafe !important; }
         .dark-theme input, .dark-theme select { background-color: #202836 !important; color: #e9ecf2 !important; }
+
+        /* --- মিউটেড অ্যাকসেন্ট প্যালেট (চোখে আরাম দেওয়ার জন্য) --- */
+        /* নীল / ইনডিগো */
+        .dark-theme .bg-blue-50 { background-color: rgba(99,102,241,0.14) !important; }
+        .dark-theme .bg-blue-50\/80 { background-color: rgba(99,102,241,0.14) !important; }
+        .dark-theme .bg-blue-100 { background-color: rgba(99,102,241,0.20) !important; }
+        .dark-theme .text-blue-950 { color: #c7d2fe !important; }
+        .dark-theme .text-blue-800 { color: #a5b4fc !important; }
+        .dark-theme .text-blue-700 { color: #a5b4fc !important; }
+        .dark-theme .text-blue-600 { color: #93a0fa !important; }
+        .dark-theme .text-blue-500 { color: #8b93f8 !important; }
+        .dark-theme .bg-blue-500 { background-color: #5b57d6 !important; }
+        .dark-theme .bg-blue-600 { background-color: #554fce !important; }
+        .dark-theme .bg-blue-700 { background-color: #453fb0 !important; }
+        .dark-theme .ring-blue-500 { --tw-ring-color: rgba(99,102,241,0.45) !important; }
+        .dark-theme .border-blue-100 { border-color: rgba(99,102,241,0.25) !important; }
+        .dark-theme .border-blue-200 { border-color: rgba(99,102,241,0.35) !important; }
+        .dark-theme .border-blue-300 { border-color: rgba(99,102,241,0.45) !important; }
+        .dark-theme .shadow-blue-100 { --tw-shadow-color: rgba(99,102,241,0.15) !important; }
+        .dark-theme .shadow-blue-200 { --tw-shadow-color: rgba(99,102,241,0.18) !important; }
+
+        /* সায়ান / টিল */
+        .dark-theme .bg-cyan-50 { background-color: rgba(45,212,191,0.14) !important; }
+        .dark-theme .bg-cyan-50\/70 { background-color: rgba(45,212,191,0.14) !important; }
+        .dark-theme .bg-cyan-100 { background-color: rgba(45,212,191,0.20) !important; }
+        .dark-theme .text-cyan-800 { color: #7dd3c8 !important; }
+        .dark-theme .text-cyan-700 { color: #5eeada !important; }
+        .dark-theme .text-cyan-600 { color: #5eeada !important; }
+        .dark-theme .text-cyan-400 { color: #5eeada !important; }
+        .dark-theme .bg-cyan-600 { background-color: #14a693 !important; }
+        .dark-theme .bg-cyan-700 { background-color: #0e8a7a !important; }
+        .dark-theme .ring-cyan-500 { --tw-ring-color: rgba(45,212,191,0.45) !important; }
+        .dark-theme .border-cyan-100 { border-color: rgba(45,212,191,0.25) !important; }
+        .dark-theme .border-cyan-200 { border-color: rgba(45,212,191,0.35) !important; }
+        .dark-theme .border-cyan-300 { border-color: rgba(45,212,191,0.45) !important; }
+        .dark-theme .shadow-cyan-100 { --tw-shadow-color: rgba(45,212,191,0.15) !important; }
+        .dark-theme .shadow-cyan-200 { --tw-shadow-color: rgba(45,212,191,0.18) !important; }
+
+        /* সবুজ / মিন্ট (সফলতা) */
+        .dark-theme .bg-emerald-50 { background-color: rgba(52,211,153,0.14) !important; }
+        .dark-theme .bg-emerald-50\/80 { background-color: rgba(52,211,153,0.14) !important; }
+        .dark-theme .bg-emerald-100 { background-color: rgba(52,211,153,0.20) !important; }
+        .dark-theme .text-emerald-800 { color: #86efc0 !important; }
+        .dark-theme .text-emerald-700 { color: #6de6ab !important; }
+        .dark-theme .text-emerald-600 { color: #6de6ab !important; }
+        .dark-theme .bg-emerald-600 { background-color: #14a077 !important; }
+        .dark-theme .shadow-emerald-200 { --tw-shadow-color: rgba(52,211,153,0.18) !important; }
+        .dark-theme .border-emerald-200 { border-color: rgba(52,211,153,0.35) !important; }
+
+        /* সোনালি / অ্যাম্বার (পিন) */
+        .dark-theme .bg-amber-100 { background-color: rgba(245,158,11,0.20) !important; }
+        .dark-theme .text-amber-800 { color: #fbd48a !important; }
+        .dark-theme .text-amber-700 { color: #fbd48a !important; }
+        .dark-theme .border-amber-300 { border-color: rgba(245,158,11,0.4) !important; }
+        .dark-theme .border-amber-400 { border-color: rgba(245,158,11,0.55) !important; }
+        .dark-theme .shadow-amber-50 { --tw-shadow-color: rgba(245,158,11,0.12) !important; }
+        .dark-theme .ring-amber-100 { --tw-ring-color: rgba(245,158,11,0.22) !important; }
+
+        /* লাল / কোরাল (ডিলিট, নেগেটিভ) */
+        .dark-theme .bg-red-50 { background-color: rgba(251,113,133,0.14) !important; }
+        .dark-theme .bg-red-100 { background-color: rgba(251,113,133,0.20) !important; }
+        .dark-theme .text-red-400 { color: #fda4af !important; }
+        .dark-theme .text-red-500 { color: #fb7185 !important; }
+        .dark-theme .text-red-600 { color: #fb7185 !important; }
+        .dark-theme .text-red-700 { color: #fda4af !important; }
+        .dark-theme .bg-red-600 { background-color: #c94a63 !important; }
+        .dark-theme .bg-red-700 { background-color: #a83a50 !important; }
+        .dark-theme .shadow-red-100 { --tw-shadow-color: rgba(251,113,133,0.15) !important; }
+        .dark-theme .border-red-200 { border-color: rgba(251,113,133,0.35) !important; }
       `}</style>
       <div className="max-w-4xl mx-auto">
         {/* Title Header */}
@@ -1071,13 +1128,19 @@ export default function Home() {
                 <div
                   key={course.id}
                   className={`bg-white rounded-3xl p-6 shadow-sm border transition relative ${
+                    !isCardExpanded ? "pb-3" : ""
+                  } ${
                     course.isPinned
                       ? "border-amber-400 ring-2 ring-amber-100 shadow-amber-50"
                       : "border-slate-200 hover:shadow-md"
                   }`}
                 >
                   {/* Course Header */}
-                  <div className="flex justify-between items-start border-b border-slate-100 pb-4 mb-4 gap-2">
+                  <div
+                    className={`flex justify-between items-start gap-2 ${
+                      isCardExpanded ? "border-b border-slate-100 pb-4 mb-4" : ""
+                    }`}
+                  >
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <h2 className="text-xl font-blueprint font-bold text-slate-800">
@@ -1099,16 +1162,16 @@ export default function Home() {
                       )}
                     </div>
 
-                    {/* মাঝের অংশ: মিনিমাইজ অবস্থায় A+ পেতে কত লাগবে ও Best 3 CT দেখাবে */}
+                    {/* মাঝের অংশ: মিনিমাইজ অবস্থায় Best 3 CT ও A+ পেতে কত লাগবে দেখাবে */}
                     {!isCardExpanded && (
                       <div className="flex-1 flex flex-col items-center justify-center min-w-[130px]">
-                        <p className="text-lg font-black text-emerald-600 whitespace-nowrap text-center">
+                        <p className="text-lg font-bold text-blue-500 whitespace-nowrap">
+                          Best 3 CT: <span className="text-blue-600">{best3Avg}</span>
+                        </p>
+                        <p className="text-sm font-black text-emerald-600 whitespace-nowrap text-center">
                           {neededForA <= 0
                             ? "A+ \u09a8\u09bf\u09b6\u09cd\u099a\u09bf\u09a4! \ud83c\udf89"
                             : `A+ \u09aa\u09c7\u09a4\u09c7: ${neededForA.toFixed(1)}`}
-                        </p>
-                        <p className="text-sm font-bold text-blue-500 whitespace-nowrap">
-                          Best 3 CT: <span className="text-blue-600">{best3Avg}</span>
                         </p>
                       </div>
                     )}
