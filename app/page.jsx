@@ -231,7 +231,7 @@ export default function Home() {
   // State for opening/closing the teacher-based section (teacher1/teacher2) in each course
   const [expandedTeacherSections, setExpandedTeacherSections] = useState({});
   const toggleTeacherSection = (key) => {
-    setExpandedTeacherSections((prev) => ({ ...prev, [key]: prev[key] === false ? true : false }));
+    setExpandedTeacherSections((prev) => ({ ...prev, [key]: prev[key] === true ? false : true }));
   };
 
   const currentCourses = activeTab === "my" ? myCourses : friendCourses;
@@ -1358,7 +1358,7 @@ export default function Home() {
                         {["teacher1", "teacher2"].map((tKey) => {
                           const teacherChapters = course.chapters.filter((c) => c.teacher === tKey);
                           const sectionKey = `${course.id}:${tKey}`;
-                          const isSectionExpanded = expandedTeacherSections[sectionKey] !== false;
+                          const isSectionExpanded = expandedTeacherSections[sectionKey] === true;
                           const doneCount = teacherChapters.filter((c) => c.done).length;
 
                           return (
