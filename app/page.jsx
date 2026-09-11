@@ -829,7 +829,7 @@ export default function Home() {
 
   return (
     <div
-      className={`min-h-screen min-h-[100dvh] ${darkMode ? "dark-theme" : ""} p-4 md:p-8 text-slate-800 font-sans`}
+      className={`min-h-screen min-h-[100dvh] w-full overflow-x-hidden ${darkMode ? "dark-theme" : ""} p-4 md:p-8 text-slate-800 font-sans`}
       style={{
         backgroundColor: darkMode ? "#151a22" : "#EAE7DC",
         backgroundImage: darkMode
@@ -1184,11 +1184,11 @@ export default function Home() {
                 >
                   {/* Course Header */}
                   <div
-                    className={`flex justify-between items-start gap-2 ${
+                    className={`flex flex-wrap justify-between items-start gap-2 ${
                       isCardExpanded ? "border-b border-slate-100 pb-4 mb-4" : ""
                     }`}
                   >
-                    <div>
+                    <div className="w-full sm:w-auto">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h2 className="text-xl font-blueprint font-bold text-slate-800">
                           {index + 1}. {course.name}
@@ -1211,7 +1211,7 @@ export default function Home() {
 
                     {/* Middle section: shows Best 3 CT and what's needed for A+ when minimized */}
                     {!isCardExpanded && (
-                      <div className="flex-1 flex flex-col items-center justify-center min-w-[130px]">
+                      <div className="flex-1 flex flex-col items-center justify-center min-w-[100px] sm:min-w-[130px]">
                         <p className="text-lg font-bold text-blue-500 whitespace-nowrap">
                           {lang === "bn" ? "সিটি গড়:" : "CT Average:"} <span className="text-blue-600">{best3Avg}</span>
                         </p>
@@ -1224,7 +1224,7 @@ export default function Home() {
                     )}
 
                     {/* Header Actions */}
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-wrap">
                       <div className="flex items-center bg-slate-100 rounded-xl p-1 gap-1">
                         <button
                           disabled={index === 0}
