@@ -12,9 +12,9 @@ export default function Home() {
   const handleGoogleSignInClick = () => signIn("google");
   const handleLogout = () => signOut();
 
-  // --- "আমাকে মনে রাখো" (Remember Me) লজিক ---
-  // NextAuth ডিফল্টভাবে ~৩০ দিন লগইন মনে রাখে। "মনে রাখো" আনচেক করলে
-  // ব্রাউজার সম্পূর্ণ বন্ধ করে আবার খুললে (নতুন সেশন) স্বয়ংক্রিয়ভাবে লগ-আউট হয়ে যাবে।
+  // --- "Remember Me" Logic ---
+  // NextAuth remembers the login for ~30 days by default. If "Remember Me" is unchecked,
+  // closing the browser completely and reopening it (new session) will automatically log out.
   const [rememberMe, setRememberMe] = useState(true);
   useEffect(() => {
     const saved = localStorage.getItem("studyTracker:rememberMe");
@@ -38,13 +38,13 @@ export default function Home() {
   };
 
   const [activeTab, setActiveTab] = useState("my"); // "my", "friend", "group"
-  // --- সেটিংস: ডার্ক মোড, অ্যাপ খুললে কোর্স কেমন দেখাবে, সেটিংস প্যানেল ---
+  // --- Settings: Dark mode, how courses appear on app open, settings panel ---
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [restoreLastState, setRestoreLastState] = useState(true); // true = যেভাবে রেখে গিয়েছিলে, false = সবসময় মিনিমাইজ
+  const [restoreLastState, setRestoreLastState] = useState(true); // true = restore as you left it, false = always minimized
   const [clearDataModal, setClearDataModal] = useState({ isOpen: false, step: "confirm", selected: {} });
 
-  // --- সাধারণ কনফার্মেশন মডাল (যেকোনো কিছু ডিলিট করার আগে দেখানো হবে) ---
+  // --- Generic confirmation modal (shown before deleting anything) ---
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: "", message: "", onConfirm: null });
   const openConfirmModal = (title, message, onConfirm) => {
     setConfirmModal({ isOpen: true, title, message, onConfirm });
@@ -55,10 +55,10 @@ export default function Home() {
     closeConfirmModal();
   };
 
-  // --- কোর্স কার্ডের থ্রি-ডট মেনু (পিন/এডিট/ডিলিট একসাথে) ---
+  // --- Course card three-dot menu (pin/edit/delete together) ---
   const [openCourseMenuId, setOpenCourseMenuId] = useState(null);
 
-  // --- Undo সিস্টেম: myCourses/friendCourses এ যেকোনো পরিবর্তনের আগের অবস্থা মনে রাখা ---
+  // --- Undo system: remember the previous state before any change to myCourses/friendCourses ---
   const undoStackRef = useRef([]);
   const [canUndo, setCanUndo] = useState(false);
   const pushUndoSnapshot = () => {
@@ -83,7 +83,7 @@ export default function Home() {
     setCanUndo(stack.length > 0);
   };
 
-  // ব্রাউজারে সেভ করা থাকলে সাথে সাথে অ্যাপ্লাই করো (সার্ভার থেকে ডেটা আসার আগেই), যাতে ফ্ল্যাশ না হয়
+  // Apply immediately if saved in the browser (before data arrives from the server), to avoid a flash
   useEffect(() => {
     const savedDark = localStorage.getItem("studyTracker:darkMode");
     if (savedDark !== null) setDarkMode(savedDark === "true");
@@ -103,7 +103,7 @@ export default function Home() {
   };
 
 
-  // ক্রেডিট অনুযায়ী সাজানোর হেল্পার ফাংশন (পিন করা কোর্স সবার উপরে, এরপর বেশি ক্রেডিট)
+  // Helper function to sort by credit (pinned courses on top, then by higher credit)
   const sortCoursesWithPin = (list) => {
     return [...list].sort((a, b) => {
       if (a.isPinned && !b.isPinned) return -1;
@@ -112,17 +112,17 @@ export default function Home() {
     });
   };
 
-  // আমার কোর্সের ডেটা
+  // My courses data
   const [myCourses, setMyCourses] = useState([]);
 
-  // বন্ধুর কোর্সের ডেটা
+  // Friend's courses data
   const [friendCourses, setFriendCourses] = useState([]);
 
-  // --- স্টাডি রুম / গ্রুপ স্টেট ---
+  // --- Study room / group state ---
   const [rooms, setRooms] = useState([]);
   const [selectedRoomId, setSelectedRoomId] = useState(null);
 
-  // --- ইউজারের ডেটা সেভ/লোড (Gmail অনুযায়ী, এই ব্রাউজারে) ---
+  // --- Save/load user data (by Gmail, in this browser) ---
   const [dataLoaded, setDataLoaded] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const currentEmailRef = useRef(null);
@@ -167,7 +167,7 @@ export default function Home() {
           }
         }
       } catch (e) {
-        // নেটওয়ার্ক সমস্যা হলে ডেটা লোড হবে না, সার্ভারে সেভ আছে কিন্তু নষ্ট হবে না
+        // If there is a network issue, data won't load, but it stays saved on the server and isn't lost
       }
       setDataLoaded(true);
     })();
@@ -216,7 +216,7 @@ export default function Home() {
   const [newRoomCode, setNewRoomCode] = useState("");
   const [joinRoomCodeInput, setJoinRoomCodeInput] = useState("");
 
-  // প্রতিটা কোর্সে শিক্ষক-ভিত্তিক সেকশন (teacher1/teacher2) খোলা/বন্ধ রাখার স্টেট
+  // State for opening/closing the teacher-based section (teacher1/teacher2) in each course
   const [expandedTeacherSections, setExpandedTeacherSections] = useState({});
   const toggleTeacherSection = (key) => {
     setExpandedTeacherSections((prev) => ({ ...prev, [key]: prev[key] === false ? true : false }));
@@ -225,7 +225,7 @@ export default function Home() {
   const currentCourses = activeTab === "my" ? myCourses : friendCourses;
   const currentRoom = rooms.find((r) => r.id === selectedRoomId) || rooms[0];
 
-  // ৪টি CT-র মধ্যে সেরা ৩টির গড় (Best 3 of 4)
+  // Average of the best 3 out of 4 CTs (Best 3 of 4)
   const getBest3Average = (marks) => {
     if (!marks || marks.length === 0) return "0.0";
     const sorted = [...marks].sort((a, b) => b - a);
@@ -234,7 +234,7 @@ export default function Home() {
     return (sum / best3.length).toFixed(1);
   };
 
-  // নিজের সব কোর্স থেকে সামগ্রিক প্রগ্রেস % ও গড় CT বের করা (স্টাডি রুমে দেখানোর জন্য)
+  // Calculate overall progress % and average CT from all own courses (for display in the study room)
   const getMyOverallStats = () => {
     if (myCourses.length === 0) return { progress: 0, avgCt: "0.0" };
     let totalPercent = 0;
@@ -256,10 +256,10 @@ export default function Home() {
     };
   };
 
-  // চ্যাপ্টারের teacher key ("teacher1"/"teacher2") থেকে আসল শিক্ষকের নাম বের করা
+  // Get the actual teacher name from the chapter's teacher key ("teacher1"/"teacher2")
   const getTeacherLabel = (course, teacherKey) => {
-    if (teacherKey === "teacher2") return course.teacher2 && course.teacher2.trim() ? course.teacher2 : "শিক্ষক ২";
-    return course.teacher1 && course.teacher1.trim() ? course.teacher1 : "শিক্ষক ১";
+    if (teacherKey === "teacher2") return course.teacher2 && course.teacher2.trim() ? course.teacher2 : "Teacher 2";
+    return course.teacher1 && course.teacher1.trim() ? course.teacher1 : "Teacher 1";
   };
 
   // --- Course Pin & Shuffle Handlers ---
@@ -305,8 +305,8 @@ export default function Home() {
     if (activeTab !== "my") return;
     const target = myCourses.find((c) => c.id === courseId);
     openConfirmModal(
-      "🗑️ কোর্স ডিলিট করো",
-      `তুমি কি নিশ্চিত "${target?.name || "এই কোর্সটি"}" ডিলিট করতে চাও? পরে চাইলে Undo বাটন দিয়ে ফিরিয়ে আনতে পারবে।`,
+      "🗑️ Delete Course",
+      `Are you sure you want to delete "${target?.name || "this course"}"? You can restore it later using the Undo button.`,
       () => {
         const updated = myCourses.filter((c) => c.id !== courseId);
         updateMyCourses(updated);
@@ -314,15 +314,15 @@ export default function Home() {
     );
   };
 
-  // --- সব ডেটা মুছে ফেলা (Clear All Data) ---
+  // --- Clear All Data ---
   const handleOpenClearDataModal = () => {
     setClearDataModal({ isOpen: true, step: "confirm", selected: {} });
   };
 
   const handleClearAllCourses = () => {
     openConfirmModal(
-      "🗑️ সব কোর্স ডিলিট করো",
-      "তুমি কি নিশ্চিত? তোমার সব কোর্স চিরতরে মুছে যাবে! (Undo বাটন দিয়ে ফিরিয়ে আনা যাবে)",
+      "🗑️ Delete All Courses",
+      "Are you sure? All your courses will be permanently deleted! (Can be restored with the Undo button)",
       () => {
         updateMyCourses([]);
         setClearDataModal({ isOpen: false, step: "confirm", selected: {} });
@@ -344,12 +344,12 @@ export default function Home() {
   const handleDeleteSelectedCourses = () => {
     const idsToDelete = Object.keys(clearDataModal.selected).filter((id) => clearDataModal.selected[id]);
     if (idsToDelete.length === 0) {
-      alert("অন্তত একটা কোর্স সিলেক্ট করো!");
+      alert("Please select at least one course!");
       return;
     }
     openConfirmModal(
-      "🗑️ নির্বাচিত কোর্স ডিলিট করো",
-      `নির্বাচিত ${idsToDelete.length} টা কোর্স মুছে ফেলতে চাও? (Undo বাটন দিয়ে ফিরিয়ে আনা যাবে)`,
+      "🗑️ Delete Selected Courses",
+      `Delete the ${idsToDelete.length} selected course(s)? (Can be restored with the Undo button)`,
       () => {
         const updated = myCourses.filter((c) => !idsToDelete.includes(String(c.id)));
         updateMyCourses(updated);
@@ -400,7 +400,7 @@ export default function Home() {
     else setFriendCourses(updated);
   };
 
-  // --- কোর্স কার্ড মিনিমাইজ/এক্সপান্ড টগল ---
+  // --- Course card minimize/expand toggle ---
   const toggleCourseCard = (courseId) => {
     const updated = currentCourses.map((c) =>
       c.id === courseId ? { ...c, cardExpanded: c.cardExpanded === false ? true : false } : c
@@ -484,7 +484,7 @@ export default function Home() {
 
   const handleSaveNewCourse = () => {
     if (!courseNameInput.trim()) {
-      alert("অনুগ্রহ করে কোর্সের নাম দাও!");
+      alert("Please enter a course name!");
       return;
     }
 
@@ -600,8 +600,8 @@ export default function Home() {
     const course = myCourses.find((c) => c.id === courseId);
     const chapter = course?.chapters.find((ch) => ch.id === chapterId);
     openConfirmModal(
-      "🗑️ চ্যাপ্টার ডিলিট করো",
-      `তুমি কি নিশ্চিত "${chapter?.name || "এই চ্যাপ্টার"}" ডিলিট করতে চাও? এর ভেতরের সব টপিকও মুছে যাবে।`,
+      "🗑️ Delete Chapter",
+      `Are you sure you want to delete "${chapter?.name || "this chapter"}"? All topics inside it will also be deleted.`,
       () => {
         const updated = myCourses.map((c) => {
           if (c.id === courseId) {
@@ -618,8 +618,8 @@ export default function Home() {
     if (activeTab !== "my") return;
 
     openConfirmModal(
-      "🗑️ টপিক ডিলিট করো",
-      "তুমি কি নিশ্চিত এই টপিকটি ডিলিট করতে চাও?",
+      "🗑️ Delete Topic",
+      "Are you sure you want to delete this topic?",
       () => {
         const updated = myCourses.map((c) => {
           if (c.id === courseId) {
@@ -646,7 +646,7 @@ export default function Home() {
     const numVal = value === "" ? null : Number(value);
 
     if (value !== "" && (isNaN(numVal) || numVal < 0)) {
-      alert("সঠিক নম্বর টাইপ করো!");
+      alert("Please enter a valid number!");
       return;
     }
 
@@ -678,7 +678,7 @@ export default function Home() {
   // --- Room Create / Join Handlers ---
   const handleCreateRoom = () => {
     if (!newRoomName.trim() || !newRoomCode.trim()) {
-      alert("রুমের নাম ও কোড দুটোই দিতে হবে!");
+      alert("Both room name and code are required!");
       return;
     }
 
@@ -690,7 +690,7 @@ export default function Home() {
       members: [
         {
           id: "me",
-          name: `${user?.name || "আমি"} (Me)`,
+          name: `${user?.name || "Me"} (Me)`,
           progress: myStats.progress,
           avgCt: myStats.avgCt,
           status: "Online",
@@ -703,12 +703,12 @@ export default function Home() {
     setIsCreateRoomModalOpen(false);
     setNewRoomName("");
     setNewRoomCode("");
-    alert(`🎉 "${createdRoom.name}" তৈরি হয়েছে! কোড: ${createdRoom.code}`);
+    alert(`🎉 "${createdRoom.name}" has been created! Code: ${createdRoom.code}`);
   };
 
   const handleJoinRoom = () => {
     if (!joinRoomCodeInput.trim()) {
-      alert("রুমের কোড দাও!");
+      alert("Please enter a room code!");
       return;
     }
 
@@ -720,18 +720,18 @@ export default function Home() {
       setSelectedRoomId(foundRoom.id);
       setIsJoinRoomModalOpen(false);
       setJoinRoomCodeInput("");
-      alert(`✅ সফলভাবে "${foundRoom.name}" স্টাডি রুমে জয়েন করেছো!`);
+      alert(`✅ Successfully joined the study room "${foundRoom.name}"!`);
     } else {
-      alert("⚠️ রুম কোডটি সঠিক নয়! আবার চেষ্টা করো।");
+      alert("⚠️ The room code is incorrect! Please try again.");
     }
   };
 
-  // --- Login Gate: Gmail দিয়ে সাইন-ইন না করা পর্যন্ত মূল অ্যাপ দেখা যাবে না ---
-  // --- Login Gate: Google দিয়ে সাইন-ইন না করা পর্যন্ত মূল অ্যাপ দেখা যাবে না ---
+  // --- Login Gate: the main app won't be visible until signed in with Gmail ---
+  // --- Login Gate: the main app won't be visible until signed in with Google ---
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-[#EAE7DC] flex items-center justify-center p-4">
-        <p className="text-slate-400 text-sm font-medium">লোড হচ্ছে...</p>
+        <p className="text-slate-400 text-sm font-medium">Loading...</p>
       </div>
     );
   }
@@ -756,7 +756,7 @@ export default function Home() {
               🏗️ STUDY TRACKER
             </h1>
             <p className="text-slate-500 text-sm font-medium">
-              চালিয়ে যেতে Gmail দিয়ে সাইন-ইন করো
+              Sign in with Gmail to continue
             </p>
           </div>
 
@@ -780,11 +780,11 @@ export default function Home() {
               onChange={handleToggleRememberMe}
               className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
             />
-            <span className="text-xs font-semibold text-slate-500">আমাকে মনে রাখো</span>
+            <span className="text-xs font-semibold text-slate-500">Remember Me</span>
           </label>
 
           <p className="text-[11px] text-slate-400">
-            তোমার Gmail অ্যাকাউন্ট দিয়ে নিরাপদে সাইন-ইন হবে
+            You'll be securely signed in with your Gmail account
           </p>
         </div>
       </div>
@@ -827,19 +827,19 @@ export default function Home() {
         .dark-theme .bg-slate-900\/40 { background-color: rgba(0,0,0,0.6) !important; }
         .dark-theme input, .dark-theme select { background-color: #202836 !important; color: #e9ecf2 !important; }
 
-        /* --- এই তিনটে আগে dark mode-এও সাদা থেকে যাচ্ছিল (settings/undo বাটন, সিগনেচার) --- */
+        /* --- These three used to stay white even in dark mode (settings/undo buttons, signature) --- */
         .dark-theme .bg-white\/90 { background-color: rgba(30,37,48,0.9) !important; }
         .dark-theme .bg-white\/70 { background-color: rgba(30,37,48,0.7) !important; }
         .dark-theme .hover\:bg-white:hover { background-color: #1e2530 !important; }
 
-        /* --- টগল সুইচের অফ-স্টেট, নাহলে dark mode-এ ফ্যাকাশে সাদা দেখায় --- */
+        /* --- Toggle switch off-state, otherwise it looks pale white in dark mode --- */
         .dark-theme .bg-slate-300 { background-color: #48546a !important; }
 
-        /* --- "STUDY TRACKER" হেডিং, আগে dark bg-তে কালচে নেভি রঙে প্রায় বোঝা যেত না --- */
+        /* --- "STUDY TRACKER" heading, previously barely visible in dark navy on dark bg --- */
         .dark-theme .text-\[\#1E405A\] { color: #8fb4de !important; }
 
-        /* --- মিউটেড অ্যাকসেন্ট প্যালেট (চোখে আরাম দেওয়ার জন্য) --- */
-        /* নীল / ইনডিগো */
+        /* --- Muted accent palette (for eye comfort) --- */
+        /* Blue / Indigo */
         .dark-theme .bg-blue-50 { background-color: rgba(99,102,241,0.14) !important; }
         .dark-theme .bg-blue-50\/80 { background-color: rgba(99,102,241,0.14) !important; }
         .dark-theme .bg-blue-100 { background-color: rgba(99,102,241,0.20) !important; }
@@ -858,7 +858,7 @@ export default function Home() {
         .dark-theme .shadow-blue-100 { --tw-shadow-color: rgba(99,102,241,0.15) !important; }
         .dark-theme .shadow-blue-200 { --tw-shadow-color: rgba(99,102,241,0.18) !important; }
 
-        /* সায়ান / টিল */
+        /* Cyan / Teal */
         .dark-theme .bg-cyan-50 { background-color: rgba(45,212,191,0.14) !important; }
         .dark-theme .bg-cyan-50\/70 { background-color: rgba(45,212,191,0.14) !important; }
         .dark-theme .bg-cyan-100 { background-color: rgba(45,212,191,0.20) !important; }
@@ -875,7 +875,7 @@ export default function Home() {
         .dark-theme .shadow-cyan-100 { --tw-shadow-color: rgba(45,212,191,0.15) !important; }
         .dark-theme .shadow-cyan-200 { --tw-shadow-color: rgba(45,212,191,0.18) !important; }
 
-        /* সবুজ / মিন্ট (সফলতা) */
+        /* Green / Mint (success) */
         .dark-theme .bg-emerald-50 { background-color: rgba(52,211,153,0.14) !important; }
         .dark-theme .bg-emerald-50\/80 { background-color: rgba(52,211,153,0.14) !important; }
         .dark-theme .bg-emerald-100 { background-color: rgba(52,211,153,0.20) !important; }
@@ -886,7 +886,7 @@ export default function Home() {
         .dark-theme .shadow-emerald-200 { --tw-shadow-color: rgba(52,211,153,0.18) !important; }
         .dark-theme .border-emerald-200 { border-color: rgba(52,211,153,0.35) !important; }
 
-        /* সোনালি / অ্যাম্বার (পিন) */
+        /* Gold / Amber (pin) */
         .dark-theme .bg-amber-100 { background-color: rgba(245,158,11,0.20) !important; }
         .dark-theme .text-amber-800 { color: #fbd48a !important; }
         .dark-theme .text-amber-700 { color: #fbd48a !important; }
@@ -895,7 +895,7 @@ export default function Home() {
         .dark-theme .shadow-amber-50 { --tw-shadow-color: rgba(245,158,11,0.12) !important; }
         .dark-theme .ring-amber-100 { --tw-ring-color: rgba(245,158,11,0.22) !important; }
 
-        /* লাল / কোরাল (ডিলিট, নেগেটিভ) */
+        /* Red / Coral (delete, negative) */
         .dark-theme .bg-red-50 { background-color: rgba(251,113,133,0.14) !important; }
         .dark-theme .bg-red-100 { background-color: rgba(251,113,133,0.20) !important; }
         .dark-theme .text-red-400 { color: #fda4af !important; }
@@ -914,7 +914,7 @@ export default function Home() {
             <div className="flex items-center justify-center gap-2 mb-1">
               <span className="text-[10px] font-bold text-blue-500 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></span>
-                {"\u09b8\u09c7\u09ad \u09b9\u099a\u09cd\u099b\u09c7..."}
+                {"Saving..."}
               </span>
             </div>
           )}
@@ -922,7 +922,7 @@ export default function Home() {
             🏗️ STUDY TRACKER
           </h1>
           <p className="text-slate-500 font-medium">
-            {"\u0997\u09cd\u09b0\u09c1\u09aa, \u09ac\u09a8\u09cd\u09a7\u09c1 \u098f\u09ac\u0982 \u09a8\u09bf\u099c\u09c7\u09b0 \u09aa\u09dc\u09be\u09b0 \u0985\u0997\u09cd\u09b0\u0997\u09a4\u09bf \u0993 \u09b8\u09bf\u09b2\u09c7\u09ac\u09be\u09b8 \u099f\u09cd\u09b0\u09cd\u09af\u09be\u0995 \u0995\u09b0\u09cb"}
+            {"Track your group, friends, and your own study progress and syllabus"}
           </p>
         </div>
 
@@ -937,7 +937,7 @@ export default function Home() {
                   : "text-slate-600 hover:bg-slate-50"
               }`}
             >
-              👷 আমার প্রগ্রেস
+              👷 My Progress
             </button>
             <button
               onClick={() => setActiveTab("friend")}
@@ -947,7 +947,7 @@ export default function Home() {
                   : "text-slate-600 hover:bg-slate-50"
               }`}
             >
-              🧑‍🤝‍🧑 বন্ধুর প্রগ্রেস
+              🧑‍🤝‍🧑 Friend's Progress
             </button>
             <button
               onClick={() => setActiveTab("group")}
@@ -957,17 +957,17 @@ export default function Home() {
                   : "text-slate-600 hover:bg-slate-50"
               }`}
             >
-              📐 গ্রুপ / স্টাডি রুম
+              📐 Group / Study Room
             </button>
           </div>
 
           {activeTab !== "group" && (
             <button
               onClick={handleSortByCredit}
-              title="ক্রেডিট অনুযায়ী আবার সাজাও"
+              title="Sort again by credit"
               className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-2xl border border-slate-200 shadow-sm flex items-center gap-1.5 transition"
             >
-              📊 ক্রেডিট অনুযায়ী সাজাও
+              📊 Sort by Credit
             </button>
           )}
         </div>
@@ -978,22 +978,22 @@ export default function Home() {
             {rooms.length === 0 && (
               <div className="bg-white rounded-3xl p-10 border border-dashed border-slate-300 text-center space-y-4">
                 <div className="text-3xl">🏠</div>
-                <p className="text-slate-600 font-bold">এখনো কোনো স্টাডি রুমে নেই</p>
+                <p className="text-slate-600 font-bold">Not in a study room yet</p>
                 <p className="text-slate-400 text-sm">
-                  নতুন রুম তৈরি করো অথবা বন্ধুর দেওয়া কোড দিয়ে জয়েন করো
+                  Create a new room or join using a code from a friend
                 </p>
                 <div className="flex justify-center gap-2 pt-2">
                   <button
                     onClick={() => setIsCreateRoomModalOpen(true)}
                     className="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold shadow-md shadow-cyan-100 transition"
                   >
-                    + নতুন রুম তৈরি করো
+                    + Create New Room
                   </button>
                   <button
                     onClick={() => setIsJoinRoomModalOpen(true)}
                     className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold shadow-sm transition"
                   >
-                    🔑 রুমে জয়েন করো
+                    🔑 Join Room
                   </button>
                 </div>
               </div>
@@ -1006,7 +1006,7 @@ export default function Home() {
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <span className="text-xs font-bold text-cyan-600 uppercase tracking-wider block mb-1">
-                    বর্তমান স্টাডি রুম
+                    Current Study Room
                   </span>
                   <div className="flex items-center gap-3">
                     <select
@@ -1032,13 +1032,13 @@ export default function Home() {
                     onClick={() => setIsCreateRoomModalOpen(true)}
                     className="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold shadow-md shadow-cyan-100 transition"
                   >
-                    + নতুন রুম তৈরি করো
+                    + Create New Room
                   </button>
                   <button
                     onClick={() => setIsJoinRoomModalOpen(true)}
                     className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold shadow-sm transition"
                   >
-                    🔑 রুমে জয়েন করো
+                    🔑 Join Room
                   </button>
                 </div>
               </div>
@@ -1048,9 +1048,9 @@ export default function Home() {
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
               <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                 <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                  🏆 রুমের সকল মেম্বারের প্রগ্রেস ({currentRoom?.members.length} জন)
+                  🏆 Progress of All Room Members ({currentRoom?.members.length} members)
                 </h2>
-                <p className="text-xs text-slate-400 font-medium">রুম কোড শেয়ার করে বন্ধুদের ইনভাইট করো</p>
+                <p className="text-xs text-slate-400 font-medium">Invite friends by sharing the room code</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1065,14 +1065,14 @@ export default function Home() {
                           <span>{idx + 1}. {member.name}</span>
                         </h3>
                         <span className="text-[11px] font-medium text-slate-400">
-                          স্ট্যাটাস: <strong className="text-slate-600">{member.status}</strong>
+                        Status: <strong className="text-slate-600">{member.status}</strong>
                         </span>
                       </div>
                       <div className="text-right">
                         <span className="text-xl font-black text-cyan-600">
                           {member.progress}%
                         </span>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase">পড়া শেষ</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">Completed</p>
                       </div>
                     </div>
 
@@ -1107,13 +1107,13 @@ export default function Home() {
                 <div className="text-3xl">📂</div>
                 {activeTab === "my" ? (
                   <>
-                    <p className="text-slate-600 font-bold">এখনো কোনো কোর্স যোগ করা হয়নি</p>
+                    <p className="text-slate-600 font-bold">No courses added yet</p>
                     <p className="text-slate-400 text-sm">
-                      নিচের "নতুন কোর্স যুক্ত করো" বাটনে চেপে শুরু করো
+                      Tap the "Add New Course" button below to get started
                     </p>
                   </>
                 ) : (
-                  <p className="text-slate-600 font-bold">এখনো কোনো বন্ধুর কোর্স শেয়ার করা হয়নি</p>
+                  <p className="text-slate-600 font-bold">No friend's courses shared yet</p>
                 )}
               </div>
             )}
@@ -1127,7 +1127,7 @@ export default function Home() {
 
               const best3Avg = getBest3Average(course.ctMarks);
 
-              // A+ পেতে কত দরকার তার ক্যালকুলেশন
+              // Calculation of what's needed to get an A+
               const ctVal = parseFloat(best3Avg) || 0;
               const assignVal = course.assignmentMark !== null ? Number(course.assignmentMark) : 0;
               const attendVal = course.attendanceMark !== null ? Number(course.attendanceMark) : 0;
@@ -1159,7 +1159,7 @@ export default function Home() {
                         </h2>
                         {course.isPinned && (
                           <span className="bg-amber-100 text-amber-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 border border-amber-300">
-                            📌 পিন করা
+                            📌 Pinned
                           </span>
                         )}
                       </div>
@@ -1168,12 +1168,12 @@ export default function Home() {
                       </span>
                       {(course.teacher1 || course.teacher2) && (
                         <span className="inline-block mt-1.5 ml-1.5 bg-cyan-50 text-cyan-700 text-xs font-bold px-3 py-1 rounded-full border border-dashed border-cyan-300">
-                          👨‍🏫 {course.teacher1 || "শিক্ষক ১"} ও {course.teacher2 || "শিক্ষক ২"}
+                          👨‍🏫 {course.teacher1 || "Teacher 1"} and {course.teacher2 || "Teacher 2"}
                         </span>
                       )}
                     </div>
 
-                    {/* মাঝের অংশ: মিনিমাইজ অবস্থায় Best 3 CT ও A+ পেতে কত লাগবে দেখাবে */}
+                    {/* Middle section: shows Best 3 CT and what's needed for A+ when minimized */}
                     {!isCardExpanded && (
                       <div className="flex-1 flex flex-col items-center justify-center min-w-[130px]">
                         <p className="text-lg font-bold text-blue-500 whitespace-nowrap">
@@ -1181,8 +1181,8 @@ export default function Home() {
                         </p>
                         <p className="text-sm font-black text-emerald-600 whitespace-nowrap text-center">
                           {neededForA <= 0
-                            ? "A+ \u09a8\u09bf\u09b6\u09cd\u099a\u09bf\u09a4! \ud83c\udf89"
-                            : `A+ \u09aa\u09c7\u09a4\u09c7: ${neededForA.toFixed(1)}`}
+                            ? "A+ Secured! 🎉"
+                            : `Need for A+: ${neededForA.toFixed(1)}`}
                         </p>
                       </div>
                     )}
@@ -1194,7 +1194,7 @@ export default function Home() {
                           disabled={index === 0}
                           onClick={() => handleMoveCourse(index, "up")}
                           className="w-7 h-7 flex items-center justify-center rounded-lg bg-white text-slate-600 hover:text-blue-600 shadow-sm disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold transition"
-                          title="উপরে তোলো"
+                          title="Move up"
                         >
                           ▲
                         </button>
@@ -1202,20 +1202,20 @@ export default function Home() {
                           disabled={index === currentCourses.length - 1}
                           onClick={() => handleMoveCourse(index, "down")}
                           className="w-7 h-7 flex items-center justify-center rounded-lg bg-white text-slate-600 hover:text-blue-600 shadow-sm disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold transition"
-                          title="নিচে নামাও"
+                          title="Move down"
                         >
                           ▼
                         </button>
                       </div>
 
-                      {/* থ্রি-ডট মেনু: পিন, এডিট, ডিলিট একসাথে */}
+                      {/* Three-dot menu: pin, edit, delete together */}
                       <div className="relative z-50">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setOpenCourseMenuId(openCourseMenuId === course.id ? null : course.id);
                           }}
-                          title="আরও অপশন"
+                          title="More options"
                           className={`w-8 h-8 flex items-center justify-center rounded-xl border transition text-base font-black ${
                             openCourseMenuId === course.id
                               ? "bg-blue-50 text-blue-600 border-blue-200"
@@ -1237,7 +1237,7 @@ export default function Home() {
                               }}
                               className="w-full text-left px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-amber-50 hover:text-amber-700 flex items-center gap-2"
                             >
-                              📍 {course.isPinned ? "আনপিন করো" : "পিন করো"}
+                              📍 {course.isPinned ? "Unpin" : "Pin"}
                             </button>
                             {activeTab === "my" && (
                               <>
@@ -1248,7 +1248,7 @@ export default function Home() {
                                   }}
                                   className="w-full text-left px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2"
                                 >
-                                  ✏️ এডিট করো
+                                  ✏️ Edit
                                 </button>
                                 <button
                                   onClick={() => {
@@ -1257,7 +1257,7 @@ export default function Home() {
                                   }}
                                   className="w-full text-left px-3.5 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2"
                                 >
-                                  🗑️ ডিলিট করো
+                                  🗑️ Delete
                                 </button>
                               </>
                             )}
@@ -1270,13 +1270,13 @@ export default function Home() {
                           {progressPercent}%
                         </span>
                         <p className="text-[10px] text-slate-400 font-bold uppercase">
-                          {"\u0995\u09ae\u09aa\u09cd\u09b2\u09bf\u099f"}
+                          {"Complete"}
                         </p>
                       </div>
 
                       <button
                         onClick={() => toggleCourseCard(course.id)}
-                        title={isCardExpanded ? "\u09ae\u09bf\u09a8\u09bf\u09ae\u09be\u0987\u099c \u0995\u09b0\u09cb" : "\u098f\u0995\u09cd\u09b8\u09aa\u09be\u09a8\u09cd\u09a1 \u0995\u09b0\u09cb"}
+                        title={isCardExpanded ? "Minimize" : "Expand"}
                         className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-50 text-slate-500 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 transition shrink-0"
                       >
                         {isCardExpanded ? "\u25b2" : "\u25bc"}
@@ -1298,18 +1298,18 @@ export default function Home() {
 
                   {/* Course Body Grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 items-start">
-                    {/* Chapters & Topics List (শিক্ষক অনুযায়ী গ্রুপ করা) */}
+                    {/* Chapters & Topics List (grouped by teacher) */}
                     <div>
                       <div className="flex justify-between items-center mb-3">
                         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                          চ্যাপ্টার ও টপিক সিলেবাস
+                          Chapters & Topics Syllabus
                         </h3>
                         {activeTab === "my" && (
                           <button
                             onClick={() => setAddChapterModal({ isOpen: true, courseId: course.id, name: "", teacher: "teacher1" })}
                             className="text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 bg-blue-50 px-2.5 py-1 rounded-lg transition"
                           >
-                            + চ্যাপ্টার
+                            + Chapter
                           </button>
                         )}
                       </div>
@@ -1347,7 +1347,7 @@ export default function Home() {
                                 <div className={`p-2 space-y-2 ${darkMode ? "bg-[#1e2530]" : "bg-white"}`}>
                                   {teacherChapters.length === 0 ? (
                                     <p className="text-[11px] text-slate-400 italic px-1 py-1.5">
-                                      এই শিক্ষকের কোনো চ্যাপ্টার যোগ করা হয়নি
+                                      No chapters added for this teacher yet
                                     </p>
                                   ) : (
                                     teacherChapters.map((chap) => (
@@ -1391,14 +1391,14 @@ export default function Home() {
                                                     e.stopPropagation();
                                                     setEditChapterModal({ isOpen: true, courseId: course.id, chapterId: chap.id, name: chap.name, teacher: chap.teacher || "teacher1" });
                                                   }}
-                                                  title="এডিট করো"
+                                                  title="Edit"
                                                   className="p-1.5 hover:bg-slate-200 rounded text-slate-400 hover:text-blue-600 transition shrink-0"
                                                 >
                                                   ✏️
                                                 </button>
                                                 <button
                                                   onClick={(e) => handleDeleteChapter(course.id, chap.id, e)}
-                                                  title="ডিলিট করো"
+                                                  title="Delete"
                                                   className="p-1.5 hover:bg-slate-200 rounded text-slate-400 hover:text-red-600 transition shrink-0"
                                                 >
                                                   🗑️
@@ -1447,7 +1447,7 @@ export default function Home() {
                                                 </div>
                                               ))
                                             ) : (
-                                              <p className="text-[11px] text-slate-400 italic">কোনো টপিক যোগ করা হয়নি</p>
+                                              <p className="text-[11px] text-slate-400 italic">No topics added</p>
                                             )}
 
                                             {activeTab === "my" && (
@@ -1462,7 +1462,7 @@ export default function Home() {
                                                 }
                                                 className="mt-2 text-xs font-bold text-blue-600 hover:underline inline-block"
                                               >
-                                                + টপিক যোগ করো
+                                                + Add Topic
                                               </button>
                                             )}
                                           </div>
@@ -1483,7 +1483,7 @@ export default function Home() {
                       <div>
                         <div className="flex justify-between items-center mb-2">
                           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                            ক্লাস টেস্ট মার্কস (Max 4)
+                            Class Test Marks (Max 4)
                           </h3>
                         </div>
 
@@ -1508,7 +1508,7 @@ export default function Home() {
                                         value: String(mark),
                                       })
                                     }
-                                    title="এডিট / ডিলিট করো"
+                                    title="Edit / Delete"
                                     className="text-slate-400 hover:text-blue-600 text-[10px] ml-1"
                                   >
                                     ✏️
@@ -1517,7 +1517,7 @@ export default function Home() {
                               </div>
                             ))
                           ) : (
-                            <p className="text-xs text-slate-400">কোনো CT মার্কস নেই</p>
+                            <p className="text-xs text-slate-400">No CT marks yet</p>
                           )}
                         </div>
 
@@ -1534,7 +1534,7 @@ export default function Home() {
                             }
                             className={`w-full text-xs font-bold py-2 px-3 border rounded-xl transition mb-3 shadow-sm ${darkMode ? "bg-[#1e2530] hover:bg-[#29323f] border-[#3a4557] text-[#d7dbe3]" : "bg-white hover:bg-slate-100 border-slate-200 text-slate-700"}`}
                           >
-                            + CT মার্কস যোগ করো ({course.ctMarks.length}/4)
+                            + Add CT Marks ({course.ctMarks.length}/4)
                           </button>
                         )}
 
@@ -1555,10 +1555,10 @@ export default function Home() {
                         <div className={`flex items-center justify-between p-3 rounded-xl border shadow-sm ${darkMode ? "bg-[#1e2530] border-[#3a4557]" : "bg-white border-slate-200"}`}>
                           <div>
                             <span className="text-[10px] font-bold text-slate-400 uppercase block">
-                              অ্যাসাইনমেন্ট
+                              Assignment
                             </span>
                             <span className="text-sm font-extrabold text-slate-800">
-                              {course.assignmentMark !== null ? course.assignmentMark : "নেই"}
+                              {course.assignmentMark !== null ? course.assignmentMark : "None"}
                             </span>
                           </div>
                           {activeTab === "my" && (
@@ -1574,7 +1574,7 @@ export default function Home() {
                               }
                               className={`text-xs font-bold px-3 py-1.5 rounded-lg transition ${darkMode ? "bg-[#29323f] hover:bg-[#333e4e] text-[#d7dbe3]" : "bg-slate-100 hover:bg-slate-200 text-slate-700"}`}
                             >
-                              {course.assignmentMark !== null ? "✏️ এডিট" : "+ যোগ করো"}
+                              {course.assignmentMark !== null ? "✏️ Edit" : "+ Add"}
                             </button>
                           )}
                         </div>
@@ -1583,10 +1583,10 @@ export default function Home() {
                         <div className={`flex items-center justify-between p-3 rounded-xl border shadow-sm ${darkMode ? "bg-[#1e2530] border-[#3a4557]" : "bg-white border-slate-200"}`}>
                           <div>
                             <span className="text-[10px] font-bold text-slate-400 uppercase block">
-                              অ্যাটেনডেন্স (উপস্থিতি)
+                              Attendance
                             </span>
                             <span className="text-sm font-extrabold text-slate-800">
-                              {course.attendanceMark !== null ? course.attendanceMark : "নেই"}
+                              {course.attendanceMark !== null ? course.attendanceMark : "None"}
                             </span>
                           </div>
                           {activeTab === "my" && (
@@ -1602,23 +1602,23 @@ export default function Home() {
                               }
                               className={`text-xs font-bold px-3 py-1.5 rounded-lg transition ${darkMode ? "bg-[#29323f] hover:bg-[#333e4e] text-[#d7dbe3]" : "bg-slate-100 hover:bg-slate-200 text-slate-700"}`}
                             >
-                              {course.attendanceMark !== null ? "✏️ এডিট" : "+ যোগ করো"}
+                              {course.attendanceMark !== null ? "✏️ Edit" : "+ Add"}
                             </button>
                           )}
                         </div>
 
-                        {/* ✨ A+ (80) পেতে কত দরকার - ক্যালকুলেশন বক্স ✨ */}
+                        {/* ✨ What's needed to get A+ (80) - calculation box ✨ */}
                         <div className={`border p-3.5 rounded-2xl text-center shadow-sm ${darkMode ? "bg-[rgba(52,211,153,0.14)] border-[rgba(52,211,153,0.35)]" : "bg-emerald-50/80 border-emerald-200"}`}>
                           <div className={`flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider mb-1 ${darkMode ? "text-[#86efc0]" : "text-emerald-800"}`}>
-                            <span>🎯 A+ (80) পেতে দরকার</span>
+                            <span>🎯 Needed for A+ (80)</span>
                             <span className={`px-2 py-0.5 rounded-full font-bold ${darkMode ? "bg-[rgba(52,211,153,0.2)] text-[#86efc0]" : "bg-emerald-100 text-emerald-800"}`}>
-                              ইনকোর্স: {currentTotalMarks.toFixed(1)}/40
+                              In-course: {currentTotalMarks.toFixed(1)}/40
                             </span>
                           </div>
 
                           <div className={`text-2xl font-black mt-1 ${darkMode ? "text-[#6de6ab]" : "text-emerald-700"}`}>
                             {neededForA <= 0 ? (
-                              <span className={`text-xl ${darkMode ? "text-[#6de6ab]" : "text-emerald-600"}`}>A+ নিশ্চিত! 🎉</span>
+                              <span className={`text-xl ${darkMode ? "text-[#6de6ab]" : "text-emerald-600"}`}>A+ Secured! 🎉</span>
                             ) : (
                               <span>
                                 {neededForA.toFixed(1)}{" "}
@@ -1629,7 +1629,7 @@ export default function Home() {
 
                           {neededForA > 60 && (
                             <p className="text-[10px] text-red-500 font-bold mt-1">
-                              ⚠️ ফাইনাল পরীক্ষা 60 নম্বরের, তাই 80 পাওয়া সম্ভব নয়!
+                              ⚠️ The final exam is worth 60 marks, so reaching 80 isn't possible!
                             </p>
                           )}
                         </div>
@@ -1651,7 +1651,7 @@ export default function Home() {
               onClick={handleOpenCourseModal}
               className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg shadow-blue-200 transition text-sm"
             >
-              + নতুন কোর্স যুক্ত করো
+              + Add New Course
             </button>
           </div>
         )}
@@ -1664,23 +1664,23 @@ export default function Home() {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 space-y-4">
             <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-3">
-              🏠 নতুন স্টাডি রুম তৈরি করো
+              🏠 Create New Study Room
             </h3>
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">রুমের নাম</label>
+              <label className="block text-xs font-bold text-slate-500 mb-1">Room Name</label>
               <input
                 type="text"
-                placeholder="যেমন: CSE Batch 2026"
+                placeholder="e.g., CSE Batch 2026"
                 value={newRoomName}
                 onChange={(e) => setNewRoomName(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm font-medium text-slate-800 placeholder-slate-400"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">রুম কোড (বন্ধুদের শেয়ার করার জন্য)</label>
+              <label className="block text-xs font-bold text-slate-500 mb-1">Room Code (to share with friends)</label>
               <input
                 type="text"
-                placeholder="যেমন: CSE2026"
+                placeholder="e.g., CSE2026"
                 value={newRoomCode}
                 onChange={(e) => setNewRoomCode(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm font-medium uppercase text-slate-800 placeholder-slate-400"
@@ -1691,13 +1691,13 @@ export default function Home() {
                 onClick={() => setIsCreateRoomModalOpen(false)}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
               >
-                বাতিল
+                Cancel
               </button>
               <button
                 onClick={handleCreateRoom}
                 className="px-4 py-2 rounded-xl text-xs font-bold bg-cyan-600 text-white hover:bg-cyan-700 shadow-md shadow-cyan-100"
               >
-                তৈরি করো
+                Create
               </button>
             </div>
           </div>
@@ -1709,13 +1709,13 @@ export default function Home() {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 space-y-4">
             <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-3">
-              🔑 স্টাডি রুমে জয়েন করো
+              🔑 Join Study Room
             </h3>
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">রুম কোড টাইপ করো</label>
+              <label className="block text-xs font-bold text-slate-500 mb-1">Enter Room Code</label>
               <input
                 type="text"
-                placeholder="যেমন: CSE2026"
+                placeholder="e.g., CSE2026"
                 value={joinRoomCodeInput}
                 onChange={(e) => setJoinRoomCodeInput(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm font-medium uppercase text-slate-800 placeholder-slate-400"
@@ -1726,13 +1726,13 @@ export default function Home() {
                 onClick={() => setIsJoinRoomModalOpen(false)}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
               >
-                বাতিল
+                Cancel
               </button>
               <button
                 onClick={handleJoinRoom}
                 className="px-4 py-2 rounded-xl text-xs font-bold bg-cyan-600 text-white hover:bg-cyan-700 shadow-md shadow-cyan-100"
               >
-                জয়েন করো
+                Join
               </button>
             </div>
           </div>
@@ -1744,15 +1744,15 @@ export default function Home() {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-md w-full p-6 space-y-5">
             <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-3">
-              ➕ নতুন কোর্স তৈরি করো
+              ➕ Create New Course
             </h3>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">কোর্সের নাম</label>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Course Name</label>
                 <input
                   type="text"
-                  placeholder="যেমন: Algorithm Design"
+                  placeholder="e.g., Algorithm Design"
                   value={courseNameInput}
                   onChange={(e) => setCourseNameInput(e.target.value)}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium text-slate-800 placeholder-slate-400"
@@ -1760,7 +1760,7 @@ export default function Home() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">কোর্স ক্রেডিট</label>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Course Credit</label>
                 <input
                   type="number"
                   placeholder="3"
@@ -1772,20 +1772,20 @@ export default function Home() {
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">👨‍🏫 শিক্ষক ১</label>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">👨‍🏫 Teacher 1</label>
                   <input
                     type="text"
-                    placeholder="যেমন: Dr. Rahman"
+                    placeholder="e.g., Dr. Rahman"
                     value={teacher1Input}
                     onChange={(e) => setTeacher1Input(e.target.value)}
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-medium text-slate-800 placeholder-slate-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">👨‍🏫 শিক্ষক ২</label>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">👨‍🏫 Teacher 2</label>
                   <input
                     type="text"
-                    placeholder="যেমন: Dr. Karim"
+                    placeholder="e.g., Dr. Karim"
                     value={teacher2Input}
                     onChange={(e) => setTeacher2Input(e.target.value)}
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-medium text-slate-800 placeholder-slate-400"
@@ -1795,12 +1795,12 @@ export default function Home() {
 
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label className="block text-xs font-bold text-slate-500">চ্যাপ্টারগুলোর নাম (কোন শিক্ষক পড়াবেন সিলেক্ট করো)</label>
+                  <label className="block text-xs font-bold text-slate-500">Chapter Names (select which teacher will teach)</label>
                   <button
                     onClick={handleAddChapterField}
                     className="text-xs font-bold text-blue-600 hover:underline"
                   >
-                    + আরও চ্যাপ্টার
+                    + Add More Chapters
                   </button>
                 </div>
                 <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
@@ -1808,7 +1808,7 @@ export default function Home() {
                     <div key={idx} className="flex gap-2 items-center">
                       <input
                         type="text"
-                        placeholder={`চ্যাপ্টার ${idx + 1}`}
+                        placeholder={`Chapter ${idx + 1}`}
                         value={ch.name}
                         onChange={(e) => handleChapterFieldChange(idx, e.target.value)}
                         className="flex-1 px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-medium text-slate-800 placeholder-slate-400"
@@ -1821,7 +1821,7 @@ export default function Home() {
                             ch.teacher === "teacher1" ? "bg-cyan-600 text-white" : "text-slate-500"
                           }`}
                         >
-                          {teacher1Input.trim() || "শিক্ষক ১"}
+                          {teacher1Input.trim() || "Teacher 1"}
                         </button>
                         <button
                           type="button"
@@ -1830,7 +1830,7 @@ export default function Home() {
                             ch.teacher === "teacher2" ? "bg-cyan-600 text-white" : "text-slate-500"
                           }`}
                         >
-                          {teacher2Input.trim() || "শিক্ষক ২"}
+                          {teacher2Input.trim() || "Teacher 2"}
                         </button>
                       </div>
                       {chapterInputs.length > 1 && (
@@ -1852,13 +1852,13 @@ export default function Home() {
                 onClick={() => setIsCourseModalOpen(false)}
                 className="px-5 py-2.5 rounded-xl font-bold text-xs text-slate-500 hover:bg-slate-100"
               >
-                বাতিল
+                Cancel
               </button>
               <button
                 onClick={handleSaveNewCourse}
                 className="px-5 py-2.5 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-100"
               >
-                কোর্স সেভ করো
+                Save Course
               </button>
             </div>
           </div>
@@ -1870,17 +1870,17 @@ export default function Home() {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-800">
-              📖 নতুন চ্যাপ্টার যুক্ত করো
+              📖 Add New Chapter
             </h3>
             <input
               type="text"
-              placeholder="চ্যাপ্টারের নাম..."
+              placeholder="Chapter name..."
               value={addChapterModal.name}
               onChange={(e) => setAddChapterModal({ ...addChapterModal, name: e.target.value })}
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium text-slate-800 placeholder-slate-400"
             />
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1.5">কোন শিক্ষক পড়াবেন?</label>
+              <label className="block text-xs font-bold text-slate-500 mb-1.5">Which teacher will teach?</label>
               <div className="flex bg-slate-100 rounded-xl p-1 gap-1">
                 {["teacher1", "teacher2"].map((tKey) => {
                   const modalCourse = myCourses.find((c) => c.id === addChapterModal.courseId);
@@ -1893,7 +1893,7 @@ export default function Home() {
                         addChapterModal.teacher === tKey ? "bg-cyan-600 text-white shadow-sm" : "text-slate-500"
                       }`}
                     >
-                      👨‍🏫 {modalCourse ? getTeacherLabel(modalCourse, tKey) : tKey === "teacher1" ? "শিক্ষক ১" : "শিক্ষক ২"}
+                      👨‍🏫 {modalCourse ? getTeacherLabel(modalCourse, tKey) : tKey === "teacher1" ? "Teacher 1" : "Teacher 2"}
                     </button>
                   );
                 })}
@@ -1904,13 +1904,13 @@ export default function Home() {
                 onClick={() => setAddChapterModal({ isOpen: false, courseId: null, name: "", teacher: "teacher1" })}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
               >
-                বাতিল
+                Cancel
               </button>
               <button
                 onClick={handleSaveNewChapter}
                 className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700"
               >
-                যোগ করো
+                Add
               </button>
             </div>
           </div>
@@ -1922,11 +1922,11 @@ export default function Home() {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-800">
-              📌 চ্যাপ্টারের ভেতরে টপিক যোগ করো
+              📌 Add Topic Inside Chapter
             </h3>
             <input
               type="text"
-              placeholder="টপিকের নাম..."
+              placeholder="Topic name..."
               value={addTopicModal.name}
               onChange={(e) => setAddTopicModal({ ...addTopicModal, name: e.target.value })}
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium text-slate-800 placeholder-slate-400"
@@ -1936,13 +1936,13 @@ export default function Home() {
                 onClick={() => setAddTopicModal({ isOpen: false, courseId: null, chapterId: null, name: "" })}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
               >
-                বাতিল
+                Cancel
               </button>
               <button
                 onClick={handleSaveNewTopic}
                 className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700"
               >
-                যোগ করো
+                Add
               </button>
             </div>
           </div>
@@ -1954,7 +1954,7 @@ export default function Home() {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-800">
-              ✏️ চ্যাপ্টারের নাম পরিবর্তন করো
+              ✏️ Rename Chapter
             </h3>
             <input
               type="text"
@@ -1963,7 +1963,7 @@ export default function Home() {
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium text-slate-800 placeholder-slate-400"
             />
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1.5">কোন শিক্ষক পড়াবেন?</label>
+              <label className="block text-xs font-bold text-slate-500 mb-1.5">Which teacher will teach?</label>
               <div className="flex bg-slate-100 rounded-xl p-1 gap-1">
                 {["teacher1", "teacher2"].map((tKey) => {
                   const modalCourse = myCourses.find((c) => c.id === editChapterModal.courseId);
@@ -1976,7 +1976,7 @@ export default function Home() {
                         editChapterModal.teacher === tKey ? "bg-cyan-600 text-white shadow-sm" : "text-slate-500"
                       }`}
                     >
-                      👨‍🏫 {modalCourse ? getTeacherLabel(modalCourse, tKey) : tKey === "teacher1" ? "শিক্ষক ১" : "শিক্ষক ২"}
+                      👨‍🏫 {modalCourse ? getTeacherLabel(modalCourse, tKey) : tKey === "teacher1" ? "Teacher 1" : "Teacher 2"}
                     </button>
                   );
                 })}
@@ -1987,13 +1987,13 @@ export default function Home() {
                 onClick={() => setEditChapterModal({ isOpen: false, courseId: null, chapterId: null, name: "", teacher: "teacher1" })}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
               >
-                বাতিল
+                Cancel
               </button>
               <button
                 onClick={handleSaveEditChapter}
                 className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700"
               >
-                সেভ করো
+                Save
               </button>
             </div>
           </div>
@@ -2005,30 +2005,30 @@ export default function Home() {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-800">
-              🎯 নম্বর বসাও / আপডেট করো
+              🎯 Enter / Update Marks
             </h3>
             <input
               type="number"
-              placeholder="নম্বর টাইপ করো..."
+              placeholder="Enter marks..."
               value={markModal.value}
               onChange={(e) => setMarkModal({ ...markModal, value: e.target.value })}
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium text-slate-800 placeholder-slate-400"
             />
             <p className="text-[11px] text-slate-400">
-              * নম্বর মুছে ফেলতে বক্স খালি রেখে সেভ দাও
+              * Leave the box empty and save to remove the marks
             </p>
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setMarkModal({ isOpen: false, type: "", courseId: null, ctIndex: null, value: "" })}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
               >
-                বাতিল
+                Cancel
               </button>
               <button
                 onClick={handleSaveMarkModal}
                 className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700"
               >
-                সেভ করো
+                Save
               </button>
             </div>
           </div>
@@ -2040,10 +2040,10 @@ export default function Home() {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-800">
-              ✏️ কোর্সের তথ্য পরিবর্তন করো
+              ✏️ Edit Course Details
             </h3>
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">কোর্সের নাম</label>
+              <label className="block text-xs font-bold text-slate-500 mb-1">Course Name</label>
               <input
                 type="text"
                 value={renameCourseModal.name}
@@ -2053,20 +2053,20 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">👨‍🏫 শিক্ষক ১</label>
+                <label className="block text-xs font-bold text-slate-500 mb-1">👨‍🏫 Teacher 1</label>
                 <input
                   type="text"
-                  placeholder="যেমন: Dr. Rahman"
+                  placeholder="e.g., Dr. Rahman"
                   value={renameCourseModal.teacher1}
                   onChange={(e) => setRenameCourseModal({ ...renameCourseModal, teacher1: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-medium text-slate-800 placeholder-slate-400"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">👨‍🏫 শিক্ষক ২</label>
+                <label className="block text-xs font-bold text-slate-500 mb-1">👨‍🏫 Teacher 2</label>
                 <input
                   type="text"
-                  placeholder="যেমন: Dr. Karim"
+                  placeholder="e.g., Dr. Karim"
                   value={renameCourseModal.teacher2}
                   onChange={(e) => setRenameCourseModal({ ...renameCourseModal, teacher2: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-medium text-slate-800 placeholder-slate-400"
@@ -2078,13 +2078,13 @@ export default function Home() {
                 onClick={() => setRenameCourseModal({ isOpen: false, courseId: null, name: "", teacher1: "", teacher2: "" })}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
               >
-                বাতিল
+                Cancel
               </button>
               <button
                 onClick={handleSaveRenameCourse}
                 className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700"
               >
-                সেভ করো
+                Save
               </button>
             </div>
           </div>
@@ -2109,7 +2109,7 @@ export default function Home() {
                   </span>
                   <span className="text-slate-300 text-[10px]">•</span>
                   <h3 className="text-xs font-bold text-slate-500">
-                    {"\u2699\ufe0f \u09b8\u09c7\u099f\u09bf\u0982\u09b8"}
+                    {"⚙️ Settings"}
                   </h3>
                 </div>
               </div>
@@ -2125,10 +2125,10 @@ export default function Home() {
             <div className="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
               <div>
                 <span className="text-sm font-bold text-slate-800 block">
-                  {"\ud83c\udf19 \u09a1\u09be\u09b0\u09cd\u0995 \u09ae\u09cb\u09a1"}
+                  {"🌙 Dark Mode"}
                 </span>
                 <span className="text-[11px] text-slate-400 font-medium">
-                  {"\u09b0\u09be\u09a4\u09c7 \u0985\u09cd\u09af\u09be\u09aa \u09ac\u09cd\u09af\u09ac\u09b9\u09be\u09b0\u09c7\u09b0 \u099c\u09a8\u09cd\u09af \u0995\u09be\u099c\u09c7 \u09b2\u09be\u0997\u09c7"}
+                  {"Useful for using the app at night"}
                 </span>
               </div>
               <button
@@ -2148,7 +2148,7 @@ export default function Home() {
             {/* Reopen Behavior */}
             <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2.5">
               <span className="text-sm font-bold text-slate-800 block">
-                {"\ud83d\udcf1 \u0985\u09cd\u09af\u09be\u09aa \u0996\u09c1\u09b2\u09b2\u09c7 \u0995\u09cb\u09b0\u09cd\u09b8 \u0995\u09c7\u09ae\u09a8 \u09a6\u09c7\u0996\u09be\u09ac\u09c7"}
+                {"📱 How courses appear when the app opens"}
               </span>
               <div className="flex bg-white rounded-xl p-1 gap-1 border border-slate-200">
                 <button
@@ -2157,7 +2157,7 @@ export default function Home() {
                     restoreLastState ? "bg-blue-600 text-white shadow-sm" : "text-slate-500"
                   }`}
                 >
-                  {"\u09af\u09c7\u09ad\u09be\u09ac\u09c7 \u09b0\u09c7\u0996\u09c7 \u0997\u09bf\u09df\u09c7\u099b\u09bf\u09b2\u09c7"}
+                  {"As you left it"}
                 </button>
                 <button
                   onClick={() => handleSetRestoreLastState(false)}
@@ -2165,7 +2165,7 @@ export default function Home() {
                     !restoreLastState ? "bg-blue-600 text-white shadow-sm" : "text-slate-500"
                   }`}
                 >
-                  {"\u09b8\u09ac\u09b8\u09ae\u09df \u09ae\u09bf\u09a8\u09bf\u09ae\u09be\u0987\u099c"}
+                  {"Always minimized"}
                 </button>
               </div>
             </div>
@@ -2176,7 +2176,7 @@ export default function Home() {
               className="w-full text-left flex items-center justify-between bg-red-50 hover:bg-red-100 p-3.5 rounded-2xl border border-red-200 transition"
             >
               <span className="text-sm font-bold text-red-600 flex items-center gap-2">
-                {"\ud83d\uddd1\ufe0f \u09b8\u09ac \u09a1\u09c7\u099f\u09be \u09ae\u09c1\u099b\u09c7 \u09ab\u09c7\u09b2\u09cb"}
+                {"🗑️ Clear All Data"}
               </span>
               <span className="text-red-400">›</span>
             </button>
@@ -2204,7 +2204,7 @@ export default function Home() {
                 onClick={handleLogout}
                 className="text-[11px] font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition shrink-0"
               >
-                {"\u09b2\u0997-\u0986\u0989\u099f"}
+                {"Log Out"}
               </button>
             </div>
           </div>
@@ -2218,40 +2218,40 @@ export default function Home() {
             {clearDataModal.step === "confirm" ? (
               <>
                 <h3 className="text-base font-bold text-slate-800">
-                  {"\ud83d\uddd1\ufe0f \u09b8\u09ac \u09a1\u09c7\u099f\u09be \u09ae\u09c1\u099b\u09c7 \u09ab\u09c7\u09b2\u09be"}
+                  {"🗑️ Clear All Data"}
                 </h3>
                 <p className="text-sm text-slate-500 font-medium">
-                  {"\u09a4\u09c1\u09ae\u09bf \u0995\u09bf \u09b8\u09ac \u0995\u09cb\u09b0\u09cd\u09b8 \u09a1\u09bf\u09b2\u09bf\u099f \u0995\u09b0\u09a4\u09c7 \u099a\u09be\u0993, \u09a8\u09be\u0995\u09bf \u09a8\u09bf\u09b0\u09cd\u09a6\u09bf\u09b7\u09cd\u099f \u0995\u09bf\u099b\u09c1 \u0995\u09cb\u09b0\u09cd\u09b8 \u09ac\u09c7\u099b\u09c7 \u09a1\u09bf\u09b2\u09bf\u099f \u0995\u09b0\u09a4\u09c7 \u099a\u09be\u0993?"}
+                  {"Do you want to delete all courses, or choose specific ones to delete?"}
                 </p>
                 <div className="flex flex-col gap-2 pt-2">
                   <button
                     onClick={handleClearAllCourses}
                     className="w-full px-4 py-2.5 rounded-xl text-xs font-bold bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-100"
                   >
-                    {"\u09b8\u09ac \u0995\u09cb\u09b0\u09cd\u09b8 \u09a1\u09bf\u09b2\u09bf\u099f \u0995\u09b0\u09cb"}
+                    {"Delete All Courses"}
                   </button>
                   <button
                     onClick={handleGoToSelectDelete}
                     className="w-full px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700"
                   >
-                    {"\u09a8\u09bf\u09b0\u09cd\u09a6\u09bf\u09b7\u09cd\u099f \u0995\u09bf\u099b\u09c1 \u09ac\u09c7\u099b\u09c7 \u09a8\u09be\u0993"}
+                    {"Choose Specific Courses"}
                   </button>
                   <button
                     onClick={() => setClearDataModal({ isOpen: false, step: "confirm", selected: {} })}
                     className="w-full px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
                   >
-                    {"\u09ac\u09be\u09a4\u09bf\u09b2"}
+                    {"Cancel"}
                   </button>
                 </div>
               </>
             ) : (
               <>
                 <h3 className="text-base font-bold text-slate-800">
-                  {"\u0995\u09cb\u09b0\u09cd\u09b8 \u09ac\u09c7\u099b\u09c7 \u09a8\u09be\u0993"}
+                  {"Choose Courses"}
                 </h3>
                 {myCourses.length === 0 ? (
                   <p className="text-sm text-slate-400">
-                    {"\u0995\u09cb\u09a8\u09cb \u0995\u09cb\u09b0\u09cd\u09b8 \u09a8\u09c7\u0987"}
+                    {"No courses"}
                   </p>
                 ) : (
                   <div className="space-y-1.5 max-h-64 overflow-y-auto">
@@ -2276,13 +2276,13 @@ export default function Home() {
                     onClick={() => setClearDataModal({ isOpen: false, step: "confirm", selected: {} })}
                     className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
                   >
-                    {"\u09ac\u09be\u09a4\u09bf\u09b2"}
+                    {"Cancel"}
                   </button>
                   <button
                     onClick={handleDeleteSelectedCourses}
                     className="px-4 py-2 rounded-xl text-xs font-bold bg-red-600 hover:bg-red-700 text-white"
                   >
-                    {"\u09a1\u09bf\u09b2\u09bf\u099f \u0995\u09b0\u09cb"}
+                    {"Delete"}
                   </button>
                 </div>
               </>
@@ -2291,7 +2291,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* মেনুর বাইরে ক্লিক করলে থ্রি-ডট মেনু বন্ধ হয়ে যাবে */}
+      {/* Clicking outside the menu will close the three-dot menu */}
       {openCourseMenuId !== null && (
         <div
           className="fixed inset-0 z-40"
@@ -2299,7 +2299,7 @@ export default function Home() {
         />
       )}
 
-      {/* 11. সাধারণ কনফার্মেশন মডাল (যেকোনো ডিলিটের আগে দেখানো হয়) */}
+      {/* 11. Generic confirmation modal (shown before any delete) */}
       {confirmModal.isOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 space-y-4">
@@ -2310,13 +2310,13 @@ export default function Home() {
                 onClick={closeConfirmModal}
                 className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
               >
-                {"বাতিল"}
+                {"Cancel"}
               </button>
               <button
                 onClick={handleConfirmModalYes}
                 className="px-4 py-2.5 rounded-xl text-xs font-bold bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-100"
               >
-                {"হ্যাঁ, ডিলিট করো"}
+                {"Yes, Delete"}
               </button>
             </div>
           </div>
@@ -2332,7 +2332,7 @@ export default function Home() {
         >
           <span className="text-base">⚙️</span>
           <span className={`text-[11px] font-bold ${darkMode ? "text-[#a3abbb]" : "text-slate-500"}`}>
-            {"\u09b8\u09c7\u099f\u09bf\u0982\u09b8"}
+            {"Settings"}
           </span>
         </button>
 
@@ -2340,7 +2340,7 @@ export default function Home() {
           onClick={handleUndo}
           disabled={!canUndo}
           className={`flex items-center gap-1.5 backdrop-blur-sm border rounded-full pl-2.5 pr-3.5 py-2 shadow-md transition disabled:opacity-40 disabled:cursor-not-allowed ${darkMode ? "bg-[rgba(30,37,48,0.9)] border-[#3a4557] hover:bg-[#1e2530]" : "bg-white/90 border-slate-200/70 hover:bg-white"}`}
-          title={canUndo ? "আগের অবস্থায় ফিরিয়ে নাও" : "ফিরিয়ে নেওয়ার মতো কিছু নেই"}
+          title={canUndo ? "Restore previous state" : "Nothing to undo"}
         >
           <span className="text-base">↩️</span>
           <span className={`text-[11px] font-bold ${darkMode ? "text-[#a3abbb]" : "text-slate-500"}`}>{"Undo"}</span>
