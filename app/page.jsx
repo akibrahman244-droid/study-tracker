@@ -997,14 +997,26 @@ export default function Home() {
             </button>
           </div>
 
-          {activeTab !== "group" && (
-            <button
-              onClick={handleSortByCredit}
-              title={lang === "bn" ? "ক্রেডিট অনুযায়ী আবার সাজাও" : "Sort again by credit"}
-              className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-2xl border border-slate-200 shadow-sm flex items-center gap-1.5 transition"
-            >
-              {lang === "bn" ? "📊 ক্রেডিট অনুযায়ী সাজাও" : "📊 Sort by Credit"}
-            </button>
+          {(activeTab !== "group" || activeTab === "my") && (
+            <div className="flex items-center gap-2 flex-wrap">
+              {activeTab !== "group" && (
+                <button
+                  onClick={handleSortByCredit}
+                  title={lang === "bn" ? "ক্রেডিট অনুযায়ী আবার সাজাও" : "Sort again by credit"}
+                  className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-2xl border border-slate-200 shadow-sm flex items-center gap-1.5 transition"
+                >
+                  {lang === "bn" ? "📊 ক্রেডিট অনুযায়ী সাজাও" : "📊 Sort by Credit"}
+                </button>
+              )}
+              {activeTab === "my" && (
+                <button
+                  onClick={handleOpenCourseModal}
+                  className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-2xl shadow-sm shadow-blue-200 flex items-center gap-1.5 transition"
+                >
+                  {lang === "bn" ? "+ নতুন কোর্স" : "+ Add New Course"}
+                </button>
+              )}
+            </div>
           )}
         </div>
 
@@ -1145,7 +1157,7 @@ export default function Home() {
                   <>
                     <p className="text-slate-600 font-bold">{lang === "bn" ? "এখনো কোনো কোর্স যোগ করা হয়নি" : "No courses added yet"}</p>
                     <p className="text-slate-400 text-sm">
-                      {lang === "bn" ? 'নিচের "নতুন কোর্স যুক্ত করো" বাটনে চেপে শুরু করো' : 'Tap the "Add New Course" button below to get started'}
+                      {lang === "bn" ? 'উপরের "নতুন কোর্স" বাটনে চেপে শুরু করো' : 'Tap the "Add New Course" button above to get started'}
                     </p>
                   </>
                 ) : (
@@ -1680,17 +1692,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Add Course Button */}
-        {activeTab === "my" && (
-          <div className="mt-8 text-center">
-            <button
-              onClick={handleOpenCourseModal}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg shadow-blue-200 transition text-sm"
-            >
-              {lang === "bn" ? "+ নতুন কোর্স যুক্ত করো" : "+ Add New Course"}
-            </button>
-          </div>
-        )}
+        {/* Add Course button moved up next to "Sort by Credit" — see Tab Switcher & Quick Actions section above */}
       </div>
 
       {/* ================= MODALS SECTION ================= */}
