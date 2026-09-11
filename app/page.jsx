@@ -1099,6 +1099,20 @@ export default function Home() {
                       )}
                     </div>
 
+                    {/* মাঝের অংশ: মিনিমাইজ অবস্থায় A+ পেতে কত লাগবে ও Best 3 CT দেখাবে */}
+                    {!isCardExpanded && (
+                      <div className="flex-1 flex flex-col items-center justify-center min-w-[130px]">
+                        <p className="text-lg font-black text-emerald-600 whitespace-nowrap text-center">
+                          {neededForA <= 0
+                            ? "A+ \u09a8\u09bf\u09b6\u09cd\u099a\u09bf\u09a4! \ud83c\udf89"
+                            : `A+ \u09aa\u09c7\u09a4\u09c7: ${neededForA.toFixed(1)}`}
+                        </p>
+                        <p className="text-sm font-bold text-blue-500 whitespace-nowrap">
+                          Best 3 CT: <span className="text-blue-600">{best3Avg}</span>
+                        </p>
+                      </div>
+                    )}
+
                     {/* Header Actions */}
                     <div className="flex items-center gap-2 shrink-0">
                       <div className="flex items-center bg-slate-100 rounded-xl p-1 gap-1">
@@ -1184,18 +1198,6 @@ export default function Home() {
                         <p className="text-[10px] text-slate-400 font-bold uppercase">
                           {"\u0995\u09ae\u09aa\u09cd\u09b2\u09bf\u099f"}
                         </p>
-                        {!isCardExpanded && (
-                          <div className="mt-1 space-y-0.5">
-                            <p className="text-sm font-black text-emerald-600 whitespace-nowrap">
-                              {neededForA <= 0
-                                ? "A+ \u09a8\u09bf\u09b6\u09cd\u099a\u09bf\u09a4! \ud83c\udf89"
-                                : `A+ \u09aa\u09c7\u09a4\u09c7: ${neededForA.toFixed(1)}`}
-                            </p>
-                            <p className="text-[11px] font-bold text-blue-500 whitespace-nowrap">
-                              Best 3 CT: <span className="text-blue-600">{best3Avg}</span>
-                            </p>
-                          </div>
-                        )}
                       </div>
 
                       <button
