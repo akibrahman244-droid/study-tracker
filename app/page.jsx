@@ -799,6 +799,30 @@ export default function Home() {
             {lang === "bn" ? "তোমার Gmail অ্যাকাউন্ট দিয়ে নিরাপদে সাইন-ইন হবে" : "You'll be securely signed in with your Gmail account"}
           </p>
         </div>
+
+        {/* Language Toggle Button (bottom-right) */}
+        <div className="fixed bottom-14 right-3 z-40">
+          <button
+            onClick={handleToggleLang}
+            className="flex items-center gap-1.5 backdrop-blur-sm border rounded-full pl-2.5 pr-3.5 py-2 shadow-md transition bg-white/90 border-slate-200/70 hover:bg-white"
+            title={lang === "bn" ? "Switch to English" : "বাংলায় পরিবর্তন করো"}
+          >
+            <span className="text-base">🌐</span>
+            <span className="text-[11px] font-bold text-slate-500">
+              {lang === "bn" ? "EN" : "বাং"}
+            </span>
+          </button>
+        </div>
+
+        {/* Signature Watermark */}
+        <div className="fixed bottom-3 right-3 z-40 pointer-events-none select-none">
+          <div className="flex items-center gap-1.5 backdrop-blur-sm border rounded-full pl-2 pr-3 py-1 shadow-sm bg-white/70 border-slate-200/70">
+            <span className="text-[13px]">🏗️</span>
+            <span className="text-[10px] font-semibold tracking-wide text-slate-400">
+              Made by Akib · Civil'24, RUET
+            </span>
+          </div>
+        </div>
       </div>
     );
   }
