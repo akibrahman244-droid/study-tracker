@@ -836,6 +836,7 @@ export default function Home() {
         .dark-theme .bg-red-50 { background-color: rgba(220,38,38,0.18) !important; }
         .dark-theme .bg-red-100 { background-color: rgba(220,38,38,0.25) !important; }
         .dark-theme .bg-slate-900\/40 { background-color: rgba(0,0,0,0.6) !important; }
+        .dark-theme .text-blue-950 { color: #dbeafe !important; }
         .dark-theme input, .dark-theme select { background-color: #202836 !important; color: #e9ecf2 !important; }
       `}</style>
       <div className="max-w-4xl mx-auto">
@@ -1184,11 +1185,16 @@ export default function Home() {
                           {"\u0995\u09ae\u09aa\u09cd\u09b2\u09bf\u099f"}
                         </p>
                         {!isCardExpanded && (
-                          <p className="text-[10px] text-emerald-600 font-bold whitespace-nowrap">
-                            {neededForA <= 0
-                              ? "A+ \u09a8\u09bf\u09b6\u09cd\u099a\u09bf\u09a4! \ud83c\udf89"
-                              : `A+ \u09aa\u09c7\u09a4\u09c7: ${neededForA.toFixed(1)}`}
-                          </p>
+                          <div className="mt-1 space-y-0.5">
+                            <p className="text-sm font-black text-emerald-600 whitespace-nowrap">
+                              {neededForA <= 0
+                                ? "A+ \u09a8\u09bf\u09b6\u09cd\u099a\u09bf\u09a4! \ud83c\udf89"
+                                : `A+ \u09aa\u09c7\u09a4\u09c7: ${neededForA.toFixed(1)}`}
+                            </p>
+                            <p className="text-[11px] font-bold text-blue-500 whitespace-nowrap">
+                              Best 3 CT: <span className="text-blue-600">{best3Avg}</span>
+                            </p>
+                          </div>
                         )}
                       </div>
 
