@@ -40,8 +40,20 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("my"); // "my", "friend", "group"
   // --- Settings: Dark mode, how courses appear on app open, settings panel ---
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
   const [restoreLastState, setRestoreLastState] = useState(true); // true = restore as you left it, false = always minimized
+
+  // --- Language: toggle between English and Bangla (bottom-right button) ---
+  const [lang, setLang] = useState("en");
+  useEffect(() => {
+    const savedLang = localStorage.getItem("studyTracker:lang");
+    if (savedLang === "en" || savedLang === "bn") setLang(savedLang);
+  }, []);
+  const handleToggleLang = () => {
+    const next = lang === "en" ? "bn" : "en";
+    setLang(next);
+    localStorage.setItem("studyTracker:lang", next);
+  };
   const [clearDataModal, setClearDataModal] = useState({ isOpen: false, step: "confirm", selected: {} });
 
   // --- Generic confirmation modal (shown before deleting anything) ---
@@ -258,8 +270,8 @@ export default function Home() {
 
   // Get the actual teacher name from the chapter's teacher key ("teacher1"/"teacher2")
   const getTeacherLabel = (course, teacherKey) => {
-    if (teacherKey === "teacher2") return course.teacher2 && course.teacher2.trim() ? course.teacher2 : "Teacher 2";
-    return course.teacher1 && course.teacher1.trim() ? course.teacher1 : "Teacher 1";
+    if (teacherKey === "teacher2") return course.teacher2 && course.teacher2.trim() ? course.teacher2 : (lang === "bn" ? "শিক্ষক ২" : "Teacher 2");
+    return course.teacher1 && course.teacher1.trim() ? course.teacher1 : (lang === "bn" ? "শিক্ষক ১" : "Teacher 1");
   };
 
   // --- Course Pin & Shuffle Handlers ---
@@ -305,8 +317,8 @@ export default function Home() {
     if (activeTab !== "my") return;
     const target = myCourses.find((c) => c.id === courseId);
     openConfirmModal(
-      "🗑️ Delete Course",
-      `Are you sure you want to delete "${target?.name || "this course"}"? You can restore it later using the Undo button.`,
+      lang === "bn" ? "🗑️ কোর্স ডিলিট করো" : "🗑️ Delete Course",
+      lang === "bn" ? `তুমি কি নিশ্চিত "${target?.name || "এই কোর্সটি"}" ডিলিট করতে চাও? পরে চাইলে Undo বাটন দিয়ে ফিরিয়ে আনতে পারবে।` : `Are you sure you want to delete "${target?.name || "this course"}"? You can restore it later using the Undo button.`,
       () => {
         const updated = myCourses.filter((c) => c.id !== courseId);
         updateMyCourses(updated);
@@ -321,8 +333,8 @@ export default function Home() {
 
   const handleClearAllCourses = () => {
     openConfirmModal(
-      "🗑️ Delete All Courses",
-      "Are you sure? All your courses will be permanently deleted! (Can be restored with the Undo button)",
+      lang === "bn" ? "🗑️ সব কোর্স ডিলিট করো" : "🗑️ Delete All Courses",
+      lang === "bn" ? "তুমি কি নিশ্চিত? তোমার সব কোর্স চিরতরে মুছে যাবে! (Undo বাটন দিয়ে ফিরিয়ে আনা যাবে)" : "Are you sure? All your courses will be permanently deleted! (Can be restored with the Undo button)",
       () => {
         updateMyCourses([]);
         setClearDataModal({ isOpen: false, step: "confirm", selected: {} });
@@ -344,12 +356,12 @@ export default function Home() {
   const handleDeleteSelectedCourses = () => {
     const idsToDelete = Object.keys(clearDataModal.selected).filter((id) => clearDataModal.selected[id]);
     if (idsToDelete.length === 0) {
-      alert("Please select at least one course!");
+      alert(lang === "bn" ? "অন্তত একটা কোর্স সিলেক্ট করো!" : "Please select at least one course!");
       return;
     }
     openConfirmModal(
-      "🗑️ Delete Selected Courses",
-      `Delete the ${idsToDelete.length} selected course(s)? (Can be restored with the Undo button)`,
+      lang === "bn" ? "🗑️ নির্বাচিত কোর্স ডিলিট করো" : "🗑️ Delete Selected Courses",
+      lang === "bn" ? `নির্বাচিত ${idsToDelete.length} টা কোর্স মুছে ফেলতে চাও? (Undo বাটন দিয়ে ফিরিয়ে আনা যাবে)` : `Delete the ${idsToDelete.length} selected course(s)? (Can be restored with the Undo button)`,
       () => {
         const updated = myCourses.filter((c) => !idsToDelete.includes(String(c.id)));
         updateMyCourses(updated);
@@ -484,7 +496,7 @@ export default function Home() {
 
   const handleSaveNewCourse = () => {
     if (!courseNameInput.trim()) {
-      alert("Please enter a course name!");
+      alert(lang === "bn" ? "অনুগ্রহ করে কোর্সের নাম দাও!" : "Please enter a course name!");
       return;
     }
 
@@ -600,8 +612,8 @@ export default function Home() {
     const course = myCourses.find((c) => c.id === courseId);
     const chapter = course?.chapters.find((ch) => ch.id === chapterId);
     openConfirmModal(
-      "🗑️ Delete Chapter",
-      `Are you sure you want to delete "${chapter?.name || "this chapter"}"? All topics inside it will also be deleted.`,
+      lang === "bn" ? "🗑️ চ্যাপ্টার ডিলিট করো" : "🗑️ Delete Chapter",
+      lang === "bn" ? `তুমি কি নিশ্চিত "${chapter?.name || "এই চ্যাপ্টার"}" ডিলিট করতে চাও? এর ভেতরের সব টপিকও মুছে যাবে।` : `Are you sure you want to delete "${chapter?.name || "this chapter"}"? All topics inside it will also be deleted.`,
       () => {
         const updated = myCourses.map((c) => {
           if (c.id === courseId) {
@@ -618,8 +630,8 @@ export default function Home() {
     if (activeTab !== "my") return;
 
     openConfirmModal(
-      "🗑️ Delete Topic",
-      "Are you sure you want to delete this topic?",
+      lang === "bn" ? "🗑️ টপিক ডিলিট করো" : "🗑️ Delete Topic",
+      lang === "bn" ? "তুমি কি নিশ্চিত এই টপিকটি ডিলিট করতে চাও?" : "Are you sure you want to delete this topic?",
       () => {
         const updated = myCourses.map((c) => {
           if (c.id === courseId) {
@@ -646,7 +658,7 @@ export default function Home() {
     const numVal = value === "" ? null : Number(value);
 
     if (value !== "" && (isNaN(numVal) || numVal < 0)) {
-      alert("Please enter a valid number!");
+      alert(lang === "bn" ? "সঠিক নম্বর টাইপ করো!" : "Please enter a valid number!");
       return;
     }
 
@@ -678,7 +690,7 @@ export default function Home() {
   // --- Room Create / Join Handlers ---
   const handleCreateRoom = () => {
     if (!newRoomName.trim() || !newRoomCode.trim()) {
-      alert("Both room name and code are required!");
+      alert(lang === "bn" ? "রুমের নাম ও কোড দুটোই দিতে হবে!" : "Both room name and code are required!");
       return;
     }
 
@@ -690,7 +702,7 @@ export default function Home() {
       members: [
         {
           id: "me",
-          name: `${user?.name || "Me"} (Me)`,
+          name: `${user?.name || (lang === "bn" ? "আমি" : "Me")} (Me)`,
           progress: myStats.progress,
           avgCt: myStats.avgCt,
           status: "Online",
@@ -703,12 +715,12 @@ export default function Home() {
     setIsCreateRoomModalOpen(false);
     setNewRoomName("");
     setNewRoomCode("");
-    alert(`🎉 "${createdRoom.name}" has been created! Code: ${createdRoom.code}`);
+    alert(lang === "bn" ? `🎉 "${createdRoom.name}" তৈরি হয়েছে! কোড: ${createdRoom.code}` : `🎉 "${createdRoom.name}" has been created! Code: ${createdRoom.code}`);
   };
 
   const handleJoinRoom = () => {
     if (!joinRoomCodeInput.trim()) {
-      alert("Please enter a room code!");
+      alert(lang === "bn" ? "রুমের কোড দাও!" : "Please enter a room code!");
       return;
     }
 
@@ -720,9 +732,9 @@ export default function Home() {
       setSelectedRoomId(foundRoom.id);
       setIsJoinRoomModalOpen(false);
       setJoinRoomCodeInput("");
-      alert(`✅ Successfully joined the study room "${foundRoom.name}"!`);
+      alert(lang === "bn" ? `✅ সফলভাবে "${foundRoom.name}" স্টাডি রুমে জয়েন করেছো!` : `✅ Successfully joined the study room "${foundRoom.name}"!`);
     } else {
-      alert("⚠️ The room code is incorrect! Please try again.");
+      alert(lang === "bn" ? "⚠️ রুম কোডটি সঠিক নয়! আবার চেষ্টা করো।" : "⚠️ The room code is incorrect! Please try again.");
     }
   };
 
@@ -731,7 +743,7 @@ export default function Home() {
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-[#EAE7DC] flex items-center justify-center p-4">
-        <p className="text-slate-400 text-sm font-medium">Loading...</p>
+        <p className="text-slate-400 text-sm font-medium">{lang === "bn" ? "লোড হচ্ছে..." : "Loading..."}</p>
       </div>
     );
   }
@@ -756,7 +768,7 @@ export default function Home() {
               🏗️ STUDY TRACKER
             </h1>
             <p className="text-slate-500 text-sm font-medium">
-              Sign in with Gmail to continue
+              {lang === "bn" ? "চালিয়ে যেতে Gmail দিয়ে সাইন-ইন করো" : "Sign in with Gmail to continue"}
             </p>
           </div>
 
@@ -780,11 +792,11 @@ export default function Home() {
               onChange={handleToggleRememberMe}
               className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
             />
-            <span className="text-xs font-semibold text-slate-500">Remember Me</span>
+            <span className="text-xs font-semibold text-slate-500">{lang === "bn" ? "আমাকে মনে রাখো" : "Remember Me"}</span>
           </label>
 
           <p className="text-[11px] text-slate-400">
-            You'll be securely signed in with your Gmail account
+            {lang === "bn" ? "তোমার Gmail অ্যাকাউন্ট দিয়ে নিরাপদে সাইন-ইন হবে" : "You'll be securely signed in with your Gmail account"}
           </p>
         </div>
       </div>
@@ -914,7 +926,7 @@ export default function Home() {
             <div className="flex items-center justify-center gap-2 mb-1">
               <span className="text-[10px] font-bold text-blue-500 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></span>
-                {"Saving..."}
+                {lang === "bn" ? "সেভ হচ্ছে..." : "Saving..."}
               </span>
             </div>
           )}
@@ -922,7 +934,7 @@ export default function Home() {
             🏗️ STUDY TRACKER
           </h1>
           <p className="text-slate-500 font-medium">
-            {"Track your group, friends, and your own study progress and syllabus"}
+            {lang === "bn" ? "গ্রুপ, বন্ধু এবং নিজের পড়ার অগ্রগতি ও সিলেবাস ট্র্যাক করো" : "Track your group, friends, and your own study progress and syllabus"}
           </p>
         </div>
 
@@ -937,7 +949,7 @@ export default function Home() {
                   : "text-slate-600 hover:bg-slate-50"
               }`}
             >
-              👷 My Progress
+              {lang === "bn" ? "👷 আমার প্রগ্রেস" : "👷 My Progress"}
             </button>
             <button
               onClick={() => setActiveTab("friend")}
@@ -947,7 +959,7 @@ export default function Home() {
                   : "text-slate-600 hover:bg-slate-50"
               }`}
             >
-              🧑‍🤝‍🧑 Friend's Progress
+              {lang === "bn" ? "🧑‍🤝‍🧑 বন্ধুর প্রগ্রেস" : "🧑‍🤝‍🧑 Friend's Progress"}
             </button>
             <button
               onClick={() => setActiveTab("group")}
@@ -957,17 +969,17 @@ export default function Home() {
                   : "text-slate-600 hover:bg-slate-50"
               }`}
             >
-              📐 Group / Study Room
+              {lang === "bn" ? "📐 গ্রুপ / স্টাডি রুম" : "📐 Group / Study Room"}
             </button>
           </div>
 
           {activeTab !== "group" && (
             <button
               onClick={handleSortByCredit}
-              title="Sort again by credit"
+              title={lang === "bn" ? "ক্রেডিট অনুযায়ী আবার সাজাও" : "Sort again by credit"}
               className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-2xl border border-slate-200 shadow-sm flex items-center gap-1.5 transition"
             >
-              📊 Sort by Credit
+              {lang === "bn" ? "📊 ক্রেডিট অনুযায়ী সাজাও" : "📊 Sort by Credit"}
             </button>
           )}
         </div>
@@ -978,22 +990,22 @@ export default function Home() {
             {rooms.length === 0 && (
               <div className="bg-white rounded-3xl p-10 border border-dashed border-slate-300 text-center space-y-4">
                 <div className="text-3xl">🏠</div>
-                <p className="text-slate-600 font-bold">Not in a study room yet</p>
+                <p className="text-slate-600 font-bold">{lang === "bn" ? "এখনো কোনো স্টাডি রুমে নেই" : "Not in a study room yet"}</p>
                 <p className="text-slate-400 text-sm">
-                  Create a new room or join using a code from a friend
+                  {lang === "bn" ? "নতুন রুম তৈরি করো অথবা বন্ধুর দেওয়া কোড দিয়ে জয়েন করো" : "Create a new room or join using a code from a friend"}
                 </p>
                 <div className="flex justify-center gap-2 pt-2">
                   <button
                     onClick={() => setIsCreateRoomModalOpen(true)}
                     className="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold shadow-md shadow-cyan-100 transition"
                   >
-                    + Create New Room
+                    {lang === "bn" ? "+ নতুন রুম তৈরি করো" : "+ Create New Room"}
                   </button>
                   <button
                     onClick={() => setIsJoinRoomModalOpen(true)}
                     className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold shadow-sm transition"
                   >
-                    🔑 Join Room
+                    {lang === "bn" ? "🔑 রুমে জয়েন করো" : "🔑 Join Room"}
                   </button>
                 </div>
               </div>
@@ -1006,7 +1018,7 @@ export default function Home() {
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <span className="text-xs font-bold text-cyan-600 uppercase tracking-wider block mb-1">
-                    Current Study Room
+                    {lang === "bn" ? "বর্তমান স্টাডি রুম" : "Current Study Room"}
                   </span>
                   <div className="flex items-center gap-3">
                     <select
@@ -1032,13 +1044,13 @@ export default function Home() {
                     onClick={() => setIsCreateRoomModalOpen(true)}
                     className="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold shadow-md shadow-cyan-100 transition"
                   >
-                    + Create New Room
+                    {lang === "bn" ? "+ নতুন রুম তৈরি করো" : "+ Create New Room"}
                   </button>
                   <button
                     onClick={() => setIsJoinRoomModalOpen(true)}
                     className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold shadow-sm transition"
                   >
-                    🔑 Join Room
+                    {lang === "bn" ? "🔑 রুমে জয়েন করো" : "🔑 Join Room"}
                   </button>
                 </div>
               </div>
@@ -1048,9 +1060,9 @@ export default function Home() {
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
               <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                 <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                  🏆 Progress of All Room Members ({currentRoom?.members.length} members)
+                  {lang === "bn" ? `🏆 রুমের সকল মেম্বারের প্রগ্রেস (${currentRoom?.members.length} জন)` : `🏆 Progress of All Room Members (${currentRoom?.members.length} members)`}
                 </h2>
-                <p className="text-xs text-slate-400 font-medium">Invite friends by sharing the room code</p>
+                <p className="text-xs text-slate-400 font-medium">{lang === "bn" ? "রুম কোড শেয়ার করে বন্ধুদের ইনভাইট করো" : "Invite friends by sharing the room code"}</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1065,14 +1077,14 @@ export default function Home() {
                           <span>{idx + 1}. {member.name}</span>
                         </h3>
                         <span className="text-[11px] font-medium text-slate-400">
-                        Status: <strong className="text-slate-600">{member.status}</strong>
+                        {lang === "bn" ? "স্ট্যাটাস:" : "Status:"} <strong className="text-slate-600">{member.status}</strong>
                         </span>
                       </div>
                       <div className="text-right">
                         <span className="text-xl font-black text-cyan-600">
                           {member.progress}%
                         </span>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase">Completed</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">{lang === "bn" ? "পড়া শেষ" : "Completed"}</p>
                       </div>
                     </div>
 
@@ -1085,7 +1097,7 @@ export default function Home() {
                     </div>
 
                     <div className={`flex justify-between items-center text-xs text-slate-500 font-semibold pt-1 border-t ${darkMode ? "border-[#3a4557]" : "border-slate-200/60"}`}>
-                      <span>Best 3 CT Avg:</span>
+                      <span>{lang === "bn" ? "সেরা ৩ CT গড়:" : "Best 3 CT Avg:"}</span>
                       <span className="text-cyan-700 font-bold bg-cyan-50 px-2.5 py-0.5 rounded-lg border border-cyan-100">
                         {member.avgCt} / 20
                       </span>
@@ -1107,13 +1119,13 @@ export default function Home() {
                 <div className="text-3xl">📂</div>
                 {activeTab === "my" ? (
                   <>
-                    <p className="text-slate-600 font-bold">No courses added yet</p>
+                    <p className="text-slate-600 font-bold">{lang === "bn" ? "এখনো কোনো কোর্স যোগ করা হয়নি" : "No courses added yet"}</p>
                     <p className="text-slate-400 text-sm">
-                      Tap the "Add New Course" button below to get started
+                      {lang === "bn" ? 'নিচের "নতুন কোর্স যুক্ত করো" বাটনে চেপে শুরু করো' : 'Tap the "Add New Course" button below to get started'}
                     </p>
                   </>
                 ) : (
-                  <p className="text-slate-600 font-bold">No friend's courses shared yet</p>
+                  <p className="text-slate-600 font-bold">{lang === "bn" ? "এখনো কোনো বন্ধুর কোর্স শেয়ার করা হয়নি" : "No friend's courses shared yet"}</p>
                 )}
               </div>
             )}
@@ -1159,7 +1171,7 @@ export default function Home() {
                         </h2>
                         {course.isPinned && (
                           <span className="bg-amber-100 text-amber-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 border border-amber-300">
-                            📌 Pinned
+                            {lang === "bn" ? "📌 পিন করা" : "📌 Pinned"}
                           </span>
                         )}
                       </div>
@@ -1168,7 +1180,7 @@ export default function Home() {
                       </span>
                       {(course.teacher1 || course.teacher2) && (
                         <span className="inline-block mt-1.5 ml-1.5 bg-cyan-50 text-cyan-700 text-xs font-bold px-3 py-1 rounded-full border border-dashed border-cyan-300">
-                          👨‍🏫 {course.teacher1 || "Teacher 1"} and {course.teacher2 || "Teacher 2"}
+                          {`👨‍🏫 ${course.teacher1 || (lang === "bn" ? "শিক্ষক ১" : "Teacher 1")} ${lang === "bn" ? "ও" : "and"} ${course.teacher2 || (lang === "bn" ? "শিক্ষক ২" : "Teacher 2")}`}
                         </span>
                       )}
                     </div>
@@ -1177,12 +1189,12 @@ export default function Home() {
                     {!isCardExpanded && (
                       <div className="flex-1 flex flex-col items-center justify-center min-w-[130px]">
                         <p className="text-lg font-bold text-blue-500 whitespace-nowrap">
-                          CT Average: <span className="text-blue-600">{best3Avg}</span>
+                          {lang === "bn" ? "সিটি গড়:" : "CT Average:"} <span className="text-blue-600">{best3Avg}</span>
                         </p>
                         <p className="text-sm font-black text-emerald-600 whitespace-nowrap text-center">
                           {neededForA <= 0
-                            ? "A+ Secured! 🎉"
-                            : `Need for A+: ${neededForA.toFixed(1)}`}
+                            ? (lang === "bn" ? "A+ নিশ্চিত! 🎉" : "A+ Secured! 🎉")
+                            : (lang === "bn" ? `A+ পেতে: ${neededForA.toFixed(1)}` : `Need for A+: ${neededForA.toFixed(1)}`)}
                         </p>
                       </div>
                     )}
@@ -1194,7 +1206,7 @@ export default function Home() {
                           disabled={index === 0}
                           onClick={() => handleMoveCourse(index, "up")}
                           className="w-7 h-7 flex items-center justify-center rounded-lg bg-white text-slate-600 hover:text-blue-600 shadow-sm disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold transition"
-                          title="Move up"
+                          title={lang === "bn" ? "উপরে তোলো" : "Move up"}
                         >
                           ▲
                         </button>
@@ -1202,7 +1214,7 @@ export default function Home() {
                           disabled={index === currentCourses.length - 1}
                           onClick={() => handleMoveCourse(index, "down")}
                           className="w-7 h-7 flex items-center justify-center rounded-lg bg-white text-slate-600 hover:text-blue-600 shadow-sm disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold transition"
-                          title="Move down"
+                          title={lang === "bn" ? "নিচে নামাও" : "Move down"}
                         >
                           ▼
                         </button>
@@ -1215,7 +1227,7 @@ export default function Home() {
                             e.stopPropagation();
                             setOpenCourseMenuId(openCourseMenuId === course.id ? null : course.id);
                           }}
-                          title="More options"
+                          title={lang === "bn" ? "আরও অপশন" : "More options"}
                           className={`w-8 h-8 flex items-center justify-center rounded-xl border transition text-base font-black ${
                             openCourseMenuId === course.id
                               ? "bg-blue-50 text-blue-600 border-blue-200"
@@ -1237,7 +1249,7 @@ export default function Home() {
                               }}
                               className="w-full text-left px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-amber-50 hover:text-amber-700 flex items-center gap-2"
                             >
-                              📍 {course.isPinned ? "Unpin" : "Pin"}
+                              📍 {course.isPinned ? (lang === "bn" ? "আনপিন করো" : "Unpin") : (lang === "bn" ? "পিন করো" : "Pin")}
                             </button>
                             {activeTab === "my" && (
                               <>
@@ -1248,7 +1260,7 @@ export default function Home() {
                                   }}
                                   className="w-full text-left px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2"
                                 >
-                                  ✏️ Edit
+                                  {lang === "bn" ? "✏️ এডিট করো" : "✏️ Edit"}
                                 </button>
                                 <button
                                   onClick={() => {
@@ -1257,7 +1269,7 @@ export default function Home() {
                                   }}
                                   className="w-full text-left px-3.5 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2"
                                 >
-                                  🗑️ Delete
+                                  {lang === "bn" ? "🗑️ ডিলিট করো" : "🗑️ Delete"}
                                 </button>
                               </>
                             )}
@@ -1270,13 +1282,13 @@ export default function Home() {
                           {progressPercent}%
                         </span>
                         <p className="text-[10px] text-slate-400 font-bold uppercase">
-                          {"Complete"}
+                          {lang === "bn" ? "কমপ্লিট" : "Complete"}
                         </p>
                       </div>
 
                       <button
                         onClick={() => toggleCourseCard(course.id)}
-                        title={isCardExpanded ? "Minimize" : "Expand"}
+                        title={isCardExpanded ? (lang === "bn" ? "মিনিমাইজ করো" : "Minimize") : (lang === "bn" ? "এক্সপান্ড করো" : "Expand")}
                         className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-50 text-slate-500 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 transition shrink-0"
                       >
                         {isCardExpanded ? "\u25b2" : "\u25bc"}
@@ -1302,14 +1314,14 @@ export default function Home() {
                     <div>
                       <div className="flex justify-between items-center mb-3">
                         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                          Chapters & Topics Syllabus
+                          {lang === "bn" ? "চ্যাপ্টার ও টপিক সিলেবাস" : "Chapters & Topics Syllabus"}
                         </h3>
                         {activeTab === "my" && (
                           <button
                             onClick={() => setAddChapterModal({ isOpen: true, courseId: course.id, name: "", teacher: "teacher1" })}
                             className="text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 bg-blue-50 px-2.5 py-1 rounded-lg transition"
                           >
-                            + Chapter
+                            {lang === "bn" ? "+ চ্যাপ্টার" : "+ Chapter"}
                           </button>
                         )}
                       </div>
@@ -1347,7 +1359,7 @@ export default function Home() {
                                 <div className={`p-2 space-y-2 ${darkMode ? "bg-[#1e2530]" : "bg-white"}`}>
                                   {teacherChapters.length === 0 ? (
                                     <p className="text-[11px] text-slate-400 italic px-1 py-1.5">
-                                      No chapters added for this teacher yet
+                                      {lang === "bn" ? "এই শিক্ষকের কোনো চ্যাপ্টার যোগ করা হয়নি" : "No chapters added for this teacher yet"}
                                     </p>
                                   ) : (
                                     teacherChapters.map((chap) => (
@@ -1391,14 +1403,14 @@ export default function Home() {
                                                     e.stopPropagation();
                                                     setEditChapterModal({ isOpen: true, courseId: course.id, chapterId: chap.id, name: chap.name, teacher: chap.teacher || "teacher1" });
                                                   }}
-                                                  title="Edit"
+                                                  title={lang === "bn" ? "এডিট করো" : "Edit"}
                                                   className="p-1.5 hover:bg-slate-200 rounded text-slate-400 hover:text-blue-600 transition shrink-0"
                                                 >
                                                   ✏️
                                                 </button>
                                                 <button
                                                   onClick={(e) => handleDeleteChapter(course.id, chap.id, e)}
-                                                  title="Delete"
+                                                  title={lang === "bn" ? "ডিলিট করো" : "Delete"}
                                                   className="p-1.5 hover:bg-slate-200 rounded text-slate-400 hover:text-red-600 transition shrink-0"
                                                 >
                                                   🗑️
@@ -1447,7 +1459,7 @@ export default function Home() {
                                                 </div>
                                               ))
                                             ) : (
-                                              <p className="text-[11px] text-slate-400 italic">No topics added</p>
+                                              <p className="text-[11px] text-slate-400 italic">{lang === "bn" ? "কোনো টপিক যোগ করা হয়নি" : "No topics added"}</p>
                                             )}
 
                                             {activeTab === "my" && (
@@ -1462,7 +1474,7 @@ export default function Home() {
                                                 }
                                                 className="mt-2 text-xs font-bold text-blue-600 hover:underline inline-block"
                                               >
-                                                + Add Topic
+                                                {lang === "bn" ? "+ টপিক যোগ করো" : "+ Add Topic"}
                                               </button>
                                             )}
                                           </div>
@@ -1483,7 +1495,7 @@ export default function Home() {
                       <div>
                         <div className="flex justify-between items-center mb-2">
                           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                            Class Test Marks (Max 4)
+                            {lang === "bn" ? "ক্লাস টেস্ট মার্কস (Max 4)" : "Class Test Marks (Max 4)"}
                           </h3>
                         </div>
 
@@ -1508,7 +1520,7 @@ export default function Home() {
                                         value: String(mark),
                                       })
                                     }
-                                    title="Edit / Delete"
+                                    title={lang === "bn" ? "এডিট / ডিলিট করো" : "Edit / Delete"}
                                     className="text-slate-400 hover:text-blue-600 text-[10px] ml-1"
                                   >
                                     ✏️
@@ -1517,7 +1529,7 @@ export default function Home() {
                               </div>
                             ))
                           ) : (
-                            <p className="text-xs text-slate-400">No CT marks yet</p>
+                            <p className="text-xs text-slate-400">{lang === "bn" ? "কোনো CT মার্কস নেই" : "No CT marks yet"}</p>
                           )}
                         </div>
 
@@ -1534,14 +1546,14 @@ export default function Home() {
                             }
                             className={`w-full text-xs font-bold py-2 px-3 border rounded-xl transition mb-3 shadow-sm ${darkMode ? "bg-[#1e2530] hover:bg-[#29323f] border-[#3a4557] text-[#d7dbe3]" : "bg-white hover:bg-slate-100 border-slate-200 text-slate-700"}`}
                           >
-                            + Add CT Marks ({course.ctMarks.length}/4)
+                            {lang === "bn" ? `+ CT মার্কস যোগ করো (${course.ctMarks.length}/4)` : `+ Add CT Marks (${course.ctMarks.length}/4)`}
                           </button>
                         )}
 
                         {/* Best 3 Average */}
                         <div className={`border p-3.5 rounded-2xl text-center ${darkMode ? "bg-[rgba(99,102,241,0.14)] border-[rgba(99,102,241,0.25)]" : "bg-blue-50/80 border-blue-100"}`}>
                           <p className={`text-[11px] font-bold uppercase tracking-wider ${darkMode ? "text-[#8b93f8]" : "text-blue-500"}`}>
-                            Best 3 CT Average
+                            {lang === "bn" ? "সেরা ৩ CT গড়" : "Best 3 CT Average"}
                           </p>
                           <p className={`text-2xl font-black mt-0.5 ${darkMode ? "text-[#93a0fa]" : "text-blue-600"}`}>
                             {best3Avg}
@@ -1555,10 +1567,10 @@ export default function Home() {
                         <div className={`flex items-center justify-between p-3 rounded-xl border shadow-sm ${darkMode ? "bg-[#1e2530] border-[#3a4557]" : "bg-white border-slate-200"}`}>
                           <div>
                             <span className="text-[10px] font-bold text-slate-400 uppercase block">
-                              Assignment
+                              {lang === "bn" ? "অ্যাসাইনমেন্ট" : "Assignment"}
                             </span>
                             <span className="text-sm font-extrabold text-slate-800">
-                              {course.assignmentMark !== null ? course.assignmentMark : "None"}
+                              {course.assignmentMark !== null ? course.assignmentMark : (lang === "bn" ? "নেই" : "None")}
                             </span>
                           </div>
                           {activeTab === "my" && (
@@ -1574,7 +1586,7 @@ export default function Home() {
                               }
                               className={`text-xs font-bold px-3 py-1.5 rounded-lg transition ${darkMode ? "bg-[#29323f] hover:bg-[#333e4e] text-[#d7dbe3]" : "bg-slate-100 hover:bg-slate-200 text-slate-700"}`}
                             >
-                              {course.assignmentMark !== null ? "✏️ Edit" : "+ Add"}
+                              {course.assignmentMark !== null ? (lang === "bn" ? "✏️ এডিট" : "✏️ Edit") : (lang === "bn" ? "+ যোগ করো" : "+ Add")}
                             </button>
                           )}
                         </div>
@@ -1583,10 +1595,10 @@ export default function Home() {
                         <div className={`flex items-center justify-between p-3 rounded-xl border shadow-sm ${darkMode ? "bg-[#1e2530] border-[#3a4557]" : "bg-white border-slate-200"}`}>
                           <div>
                             <span className="text-[10px] font-bold text-slate-400 uppercase block">
-                              Attendance
+                              {lang === "bn" ? "অ্যাটেনডেন্স (উপস্থিতি)" : "Attendance"}
                             </span>
                             <span className="text-sm font-extrabold text-slate-800">
-                              {course.attendanceMark !== null ? course.attendanceMark : "None"}
+                              {course.attendanceMark !== null ? course.attendanceMark : (lang === "bn" ? "নেই" : "None")}
                             </span>
                           </div>
                           {activeTab === "my" && (
@@ -1602,7 +1614,7 @@ export default function Home() {
                               }
                               className={`text-xs font-bold px-3 py-1.5 rounded-lg transition ${darkMode ? "bg-[#29323f] hover:bg-[#333e4e] text-[#d7dbe3]" : "bg-slate-100 hover:bg-slate-200 text-slate-700"}`}
                             >
-                              {course.attendanceMark !== null ? "✏️ Edit" : "+ Add"}
+                              {course.attendanceMark !== null ? (lang === "bn" ? "✏️ এডিট" : "✏️ Edit") : (lang === "bn" ? "+ যোগ করো" : "+ Add")}
                             </button>
                           )}
                         </div>
@@ -1610,15 +1622,15 @@ export default function Home() {
                         {/* ✨ What's needed to get A+ (80) - calculation box ✨ */}
                         <div className={`border p-3.5 rounded-2xl text-center shadow-sm ${darkMode ? "bg-[rgba(52,211,153,0.14)] border-[rgba(52,211,153,0.35)]" : "bg-emerald-50/80 border-emerald-200"}`}>
                           <div className={`flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider mb-1 ${darkMode ? "text-[#86efc0]" : "text-emerald-800"}`}>
-                            <span>🎯 Needed for A+ (80)</span>
+                            <span>{lang === "bn" ? "🎯 A+ (80) পেতে দরকার" : "🎯 Needed for A+ (80)"}</span>
                             <span className={`px-2 py-0.5 rounded-full font-bold ${darkMode ? "bg-[rgba(52,211,153,0.2)] text-[#86efc0]" : "bg-emerald-100 text-emerald-800"}`}>
-                              In-course: {currentTotalMarks.toFixed(1)}/40
+                              {lang === "bn" ? "ইনকোর্স:" : "In-course:"} {currentTotalMarks.toFixed(1)}/40
                             </span>
                           </div>
 
                           <div className={`text-2xl font-black mt-1 ${darkMode ? "text-[#6de6ab]" : "text-emerald-700"}`}>
                             {neededForA <= 0 ? (
-                              <span className={`text-xl ${darkMode ? "text-[#6de6ab]" : "text-emerald-600"}`}>A+ Secured! 🎉</span>
+                              <span className={`text-xl ${darkMode ? "text-[#6de6ab]" : "text-emerald-600"}`}>{lang === "bn" ? "A+ নিশ্চিত! 🎉" : "A+ Secured! 🎉"}</span>
                             ) : (
                               <span>
                                 {neededForA.toFixed(1)}{" "}
@@ -1629,7 +1641,7 @@ export default function Home() {
 
                           {neededForA > 60 && (
                             <p className="text-[10px] text-red-500 font-bold mt-1">
-                              ⚠️ The final exam is worth 60 marks, so reaching 80 isn't possible!
+                              {lang === "bn" ? "⚠️ ফাইনাল পরীক্ষা 60 নম্বরের, তাই 80 পাওয়া সম্ভব নয়!" : "⚠️ The final exam is worth 60 marks, so reaching 80 isn't possible!"}
                             </p>
                           )}
                         </div>
@@ -1651,7 +1663,7 @@ export default function Home() {
               onClick={handleOpenCourseModal}
               className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg shadow-blue-200 transition text-sm"
             >
-              + Add New Course
+              {lang === "bn" ? "+ নতুন কোর্স যুক্ত করো" : "+ Add New Course"}
             </button>
           </div>
         )}
@@ -1664,23 +1676,23 @@ export default function Home() {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 space-y-4">
             <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-3">
-              🏠 Create New Study Room
+              {lang === "bn" ? "🏠 নতুন স্টাডি রুম তৈরি করো" : "🏠 Create New Study Room"}
             </h3>
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">Room Name</label>
+              <label className="block text-xs font-bold text-slate-500 mb-1">{lang === "bn" ? "রুমের নাম" : "Room Name"}</label>
               <input
                 type="text"
-                placeholder="e.g., CSE Batch 2026"
+                placeholder={lang === "bn" ? "যেমন: CSE Batch 2026" : "e.g., CSE Batch 2026"}
                 value={newRoomName}
                 onChange={(e) => setNewRoomName(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm font-medium text-slate-800 placeholder-slate-400"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">Room Code (to share with friends)</label>
+              <label className="block text-xs font-bold text-slate-500 mb-1">{lang === "bn" ? "রুম কোড (বন্ধুদের শেয়ার করার জন্য)" : "Room Code (to share with friends)"}</label>
               <input
                 type="text"
-                placeholder="e.g., CSE2026"
+                placeholder={lang === "bn" ? "যেমন: CSE2026" : "e.g., CSE2026"}
                 value={newRoomCode}
                 onChange={(e) => setNewRoomCode(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm font-medium uppercase text-slate-800 placeholder-slate-400"
@@ -1691,13 +1703,13 @@ export default function Home() {
                 onClick={() => setIsCreateRoomModalOpen(false)}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
               >
-                Cancel
+                {lang === "bn" ? "বাতিল" : "Cancel"}
               </button>
               <button
                 onClick={handleCreateRoom}
                 className="px-4 py-2 rounded-xl text-xs font-bold bg-cyan-600 text-white hover:bg-cyan-700 shadow-md shadow-cyan-100"
               >
-                Create
+                {lang === "bn" ? "তৈরি করো" : "Create"}
               </button>
             </div>
           </div>
@@ -1709,13 +1721,13 @@ export default function Home() {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 space-y-4">
             <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-3">
-              🔑 Join Study Room
+              {lang === "bn" ? "🔑 স্টাডি রুমে জয়েন করো" : "🔑 Join Study Room"}
             </h3>
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">Enter Room Code</label>
+              <label className="block text-xs font-bold text-slate-500 mb-1">{lang === "bn" ? "রুম কোড টাইপ করো" : "Enter Room Code"}</label>
               <input
                 type="text"
-                placeholder="e.g., CSE2026"
+                placeholder={lang === "bn" ? "যেমন: CSE2026" : "e.g., CSE2026"}
                 value={joinRoomCodeInput}
                 onChange={(e) => setJoinRoomCodeInput(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm font-medium uppercase text-slate-800 placeholder-slate-400"
@@ -1726,13 +1738,13 @@ export default function Home() {
                 onClick={() => setIsJoinRoomModalOpen(false)}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
               >
-                Cancel
+                {lang === "bn" ? "বাতিল" : "Cancel"}
               </button>
               <button
                 onClick={handleJoinRoom}
                 className="px-4 py-2 rounded-xl text-xs font-bold bg-cyan-600 text-white hover:bg-cyan-700 shadow-md shadow-cyan-100"
               >
-                Join
+                {lang === "bn" ? "জয়েন করো" : "Join"}
               </button>
             </div>
           </div>
@@ -1744,15 +1756,15 @@ export default function Home() {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-md w-full p-6 space-y-5">
             <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-3">
-              ➕ Create New Course
+              {lang === "bn" ? "➕ নতুন কোর্স তৈরি করো" : "➕ Create New Course"}
             </h3>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">Course Name</label>
+                <label className="block text-xs font-bold text-slate-500 mb-1">{lang === "bn" ? "কোর্সের নাম" : "Course Name"}</label>
                 <input
                   type="text"
-                  placeholder="e.g., Algorithm Design"
+                  placeholder={lang === "bn" ? "যেমন: Algorithm Design" : "e.g., Algorithm Design"}
                   value={courseNameInput}
                   onChange={(e) => setCourseNameInput(e.target.value)}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium text-slate-800 placeholder-slate-400"
@@ -1760,7 +1772,7 @@ export default function Home() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">Course Credit</label>
+                <label className="block text-xs font-bold text-slate-500 mb-1">{lang === "bn" ? "কোর্স ক্রেডিট" : "Course Credit"}</label>
                 <input
                   type="number"
                   placeholder="3"
@@ -1772,20 +1784,20 @@ export default function Home() {
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">👨‍🏫 Teacher 1</label>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">👨‍🏫 {lang === "bn" ? "শিক্ষক ১" : "Teacher 1"}</label>
                   <input
                     type="text"
-                    placeholder="e.g., Dr. Rahman"
+                    placeholder={lang === "bn" ? "যেমন: Dr. Rahman" : "e.g., Dr. Rahman"}
                     value={teacher1Input}
                     onChange={(e) => setTeacher1Input(e.target.value)}
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-medium text-slate-800 placeholder-slate-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">👨‍🏫 Teacher 2</label>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">👨‍🏫 {lang === "bn" ? "শিক্ষক ২" : "Teacher 2"}</label>
                   <input
                     type="text"
-                    placeholder="e.g., Dr. Karim"
+                    placeholder={lang === "bn" ? "যেমন: Dr. Karim" : "e.g., Dr. Karim"}
                     value={teacher2Input}
                     onChange={(e) => setTeacher2Input(e.target.value)}
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-medium text-slate-800 placeholder-slate-400"
@@ -1795,12 +1807,12 @@ export default function Home() {
 
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label className="block text-xs font-bold text-slate-500">Chapter Names (select which teacher will teach)</label>
+                  <label className="block text-xs font-bold text-slate-500">{lang === "bn" ? "চ্যাপ্টারগুলোর নাম (কোন শিক্ষক পড়াবেন সিলেক্ট করো)" : "Chapter Names (select which teacher will teach)"}</label>
                   <button
                     onClick={handleAddChapterField}
                     className="text-xs font-bold text-blue-600 hover:underline"
                   >
-                    + Add More Chapters
+                    {lang === "bn" ? "+ আরও চ্যাপ্টার" : "+ Add More Chapters"}
                   </button>
                 </div>
                 <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
@@ -1808,7 +1820,7 @@ export default function Home() {
                     <div key={idx} className="flex gap-2 items-center">
                       <input
                         type="text"
-                        placeholder={`Chapter ${idx + 1}`}
+                        placeholder={lang === "bn" ? `চ্যাপ্টার ${idx + 1}` : `Chapter ${idx + 1}`}
                         value={ch.name}
                         onChange={(e) => handleChapterFieldChange(idx, e.target.value)}
                         className="flex-1 px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-medium text-slate-800 placeholder-slate-400"
@@ -1821,7 +1833,7 @@ export default function Home() {
                             ch.teacher === "teacher1" ? "bg-cyan-600 text-white" : "text-slate-500"
                           }`}
                         >
-                          {teacher1Input.trim() || "Teacher 1"}
+                          {teacher1Input.trim() || (lang === "bn" ? "শিক্ষক ১" : "Teacher 1")}
                         </button>
                         <button
                           type="button"
@@ -1830,7 +1842,7 @@ export default function Home() {
                             ch.teacher === "teacher2" ? "bg-cyan-600 text-white" : "text-slate-500"
                           }`}
                         >
-                          {teacher2Input.trim() || "Teacher 2"}
+                          {teacher2Input.trim() || (lang === "bn" ? "শিক্ষক ২" : "Teacher 2")}
                         </button>
                       </div>
                       {chapterInputs.length > 1 && (
@@ -1852,13 +1864,13 @@ export default function Home() {
                 onClick={() => setIsCourseModalOpen(false)}
                 className="px-5 py-2.5 rounded-xl font-bold text-xs text-slate-500 hover:bg-slate-100"
               >
-                Cancel
+                {lang === "bn" ? "বাতিল" : "Cancel"}
               </button>
               <button
                 onClick={handleSaveNewCourse}
                 className="px-5 py-2.5 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-100"
               >
-                Save Course
+                {lang === "bn" ? "কোর্স সেভ করো" : "Save Course"}
               </button>
             </div>
           </div>
@@ -1870,17 +1882,17 @@ export default function Home() {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-800">
-              📖 Add New Chapter
+              {lang === "bn" ? "📖 নতুন চ্যাপ্টার যুক্ত করো" : "📖 Add New Chapter"}
             </h3>
             <input
               type="text"
-              placeholder="Chapter name..."
+              placeholder={lang === "bn" ? "চ্যাপ্টারের নাম..." : "Chapter name..."}
               value={addChapterModal.name}
               onChange={(e) => setAddChapterModal({ ...addChapterModal, name: e.target.value })}
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium text-slate-800 placeholder-slate-400"
             />
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1.5">Which teacher will teach?</label>
+              <label className="block text-xs font-bold text-slate-500 mb-1.5">{lang === "bn" ? "কোন শিক্ষক পড়াবেন?" : "Which teacher will teach?"}</label>
               <div className="flex bg-slate-100 rounded-xl p-1 gap-1">
                 {["teacher1", "teacher2"].map((tKey) => {
                   const modalCourse = myCourses.find((c) => c.id === addChapterModal.courseId);
@@ -1893,7 +1905,7 @@ export default function Home() {
                         addChapterModal.teacher === tKey ? "bg-cyan-600 text-white shadow-sm" : "text-slate-500"
                       }`}
                     >
-                      👨‍🏫 {modalCourse ? getTeacherLabel(modalCourse, tKey) : tKey === "teacher1" ? "Teacher 1" : "Teacher 2"}
+                      👨‍🏫 {modalCourse ? getTeacherLabel(modalCourse, tKey) : tKey === "teacher1" ? (lang === "bn" ? "শিক্ষক ১" : "Teacher 1") : (lang === "bn" ? "শিক্ষক ২" : "Teacher 2")}
                     </button>
                   );
                 })}
@@ -1904,13 +1916,13 @@ export default function Home() {
                 onClick={() => setAddChapterModal({ isOpen: false, courseId: null, name: "", teacher: "teacher1" })}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
               >
-                Cancel
+                {lang === "bn" ? "বাতিল" : "Cancel"}
               </button>
               <button
                 onClick={handleSaveNewChapter}
                 className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700"
               >
-                Add
+                {lang === "bn" ? "যোগ করো" : "Add"}
               </button>
             </div>
           </div>
@@ -1922,11 +1934,11 @@ export default function Home() {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-800">
-              📌 Add Topic Inside Chapter
+              {lang === "bn" ? "📌 চ্যাপ্টারের ভেতরে টপিক যোগ করো" : "📌 Add Topic Inside Chapter"}
             </h3>
             <input
               type="text"
-              placeholder="Topic name..."
+              placeholder={lang === "bn" ? "টপিকের নাম..." : "Topic name..."}
               value={addTopicModal.name}
               onChange={(e) => setAddTopicModal({ ...addTopicModal, name: e.target.value })}
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium text-slate-800 placeholder-slate-400"
@@ -1936,13 +1948,13 @@ export default function Home() {
                 onClick={() => setAddTopicModal({ isOpen: false, courseId: null, chapterId: null, name: "" })}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
               >
-                Cancel
+                {lang === "bn" ? "বাতিল" : "Cancel"}
               </button>
               <button
                 onClick={handleSaveNewTopic}
                 className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700"
               >
-                Add
+                {lang === "bn" ? "যোগ করো" : "Add"}
               </button>
             </div>
           </div>
@@ -1954,7 +1966,7 @@ export default function Home() {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-800">
-              ✏️ Rename Chapter
+              {lang === "bn" ? "✏️ চ্যাপ্টারের নাম পরিবর্তন করো" : "✏️ Rename Chapter"}
             </h3>
             <input
               type="text"
@@ -1963,7 +1975,7 @@ export default function Home() {
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium text-slate-800 placeholder-slate-400"
             />
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1.5">Which teacher will teach?</label>
+              <label className="block text-xs font-bold text-slate-500 mb-1.5">{lang === "bn" ? "কোন শিক্ষক পড়াবেন?" : "Which teacher will teach?"}</label>
               <div className="flex bg-slate-100 rounded-xl p-1 gap-1">
                 {["teacher1", "teacher2"].map((tKey) => {
                   const modalCourse = myCourses.find((c) => c.id === editChapterModal.courseId);
@@ -1976,7 +1988,7 @@ export default function Home() {
                         editChapterModal.teacher === tKey ? "bg-cyan-600 text-white shadow-sm" : "text-slate-500"
                       }`}
                     >
-                      👨‍🏫 {modalCourse ? getTeacherLabel(modalCourse, tKey) : tKey === "teacher1" ? "Teacher 1" : "Teacher 2"}
+                      👨‍🏫 {modalCourse ? getTeacherLabel(modalCourse, tKey) : tKey === "teacher1" ? (lang === "bn" ? "শিক্ষক ১" : "Teacher 1") : (lang === "bn" ? "শিক্ষক ২" : "Teacher 2")}
                     </button>
                   );
                 })}
@@ -1987,13 +1999,13 @@ export default function Home() {
                 onClick={() => setEditChapterModal({ isOpen: false, courseId: null, chapterId: null, name: "", teacher: "teacher1" })}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
               >
-                Cancel
+                {lang === "bn" ? "বাতিল" : "Cancel"}
               </button>
               <button
                 onClick={handleSaveEditChapter}
                 className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700"
               >
-                Save
+                {lang === "bn" ? "সেভ করো" : "Save"}
               </button>
             </div>
           </div>
@@ -2005,30 +2017,30 @@ export default function Home() {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-800">
-              🎯 Enter / Update Marks
+              {lang === "bn" ? "🎯 নম্বর বসাও / আপডেট করো" : "🎯 Enter / Update Marks"}
             </h3>
             <input
               type="number"
-              placeholder="Enter marks..."
+              placeholder={lang === "bn" ? "নম্বর টাইপ করো..." : "Enter marks..."}
               value={markModal.value}
               onChange={(e) => setMarkModal({ ...markModal, value: e.target.value })}
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium text-slate-800 placeholder-slate-400"
             />
             <p className="text-[11px] text-slate-400">
-              * Leave the box empty and save to remove the marks
+              {lang === "bn" ? "* নম্বর মুছে ফেলতে বক্স খালি রেখে সেভ দাও" : "* Leave the box empty and save to remove the marks"}
             </p>
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setMarkModal({ isOpen: false, type: "", courseId: null, ctIndex: null, value: "" })}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
               >
-                Cancel
+                {lang === "bn" ? "বাতিল" : "Cancel"}
               </button>
               <button
                 onClick={handleSaveMarkModal}
                 className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700"
               >
-                Save
+                {lang === "bn" ? "সেভ করো" : "Save"}
               </button>
             </div>
           </div>
@@ -2040,7 +2052,7 @@ export default function Home() {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-800">
-              ✏️ Edit Course Details
+              {lang === "bn" ? "✏️ কোর্সের তথ্য পরিবর্তন করো" : "✏️ Edit Course Details"}
             </h3>
             <div>
               <label className="block text-xs font-bold text-slate-500 mb-1">Course Name</label>
@@ -2078,13 +2090,13 @@ export default function Home() {
                 onClick={() => setRenameCourseModal({ isOpen: false, courseId: null, name: "", teacher1: "", teacher2: "" })}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
               >
-                Cancel
+                {lang === "bn" ? "বাতিল" : "Cancel"}
               </button>
               <button
                 onClick={handleSaveRenameCourse}
                 className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700"
               >
-                Save
+                {lang === "bn" ? "সেভ করো" : "Save"}
               </button>
             </div>
           </div>
@@ -2109,7 +2121,7 @@ export default function Home() {
                   </span>
                   <span className="text-slate-300 text-[10px]">•</span>
                   <h3 className="text-xs font-bold text-slate-500">
-                    {"⚙️ Settings"}
+                    {lang === "bn" ? "⚙️ সেটিংস" : "⚙️ Settings"}
                   </h3>
                 </div>
               </div>
@@ -2125,10 +2137,10 @@ export default function Home() {
             <div className="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
               <div>
                 <span className="text-sm font-bold text-slate-800 block">
-                  {"🌙 Dark Mode"}
+                  {lang === "bn" ? "🌙 ডার্ক মোড" : "🌙 Dark Mode"}
                 </span>
                 <span className="text-[11px] text-slate-400 font-medium">
-                  {"Useful for using the app at night"}
+                  {lang === "bn" ? "রাতে অ্যাপ ব্যবহারের জন্য কাজে লাগে" : "Useful for using the app at night"}
                 </span>
               </div>
               <button
@@ -2148,7 +2160,7 @@ export default function Home() {
             {/* Reopen Behavior */}
             <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2.5">
               <span className="text-sm font-bold text-slate-800 block">
-                {"📱 How courses appear when the app opens"}
+                {lang === "bn" ? "📱 অ্যাপ খুললে কোর্স কেমন দেখাবে" : "📱 How courses appear when the app opens"}
               </span>
               <div className="flex bg-white rounded-xl p-1 gap-1 border border-slate-200">
                 <button
@@ -2157,7 +2169,7 @@ export default function Home() {
                     restoreLastState ? "bg-blue-600 text-white shadow-sm" : "text-slate-500"
                   }`}
                 >
-                  {"As you left it"}
+                  {lang === "bn" ? "যেভাবে রেখে গিয়েছিলে" : "As you left it"}
                 </button>
                 <button
                   onClick={() => handleSetRestoreLastState(false)}
@@ -2165,7 +2177,7 @@ export default function Home() {
                     !restoreLastState ? "bg-blue-600 text-white shadow-sm" : "text-slate-500"
                   }`}
                 >
-                  {"Always minimized"}
+                  {lang === "bn" ? "সবসময় মিনিমাইজ" : "Always minimized"}
                 </button>
               </div>
             </div>
@@ -2176,7 +2188,7 @@ export default function Home() {
               className="w-full text-left flex items-center justify-between bg-red-50 hover:bg-red-100 p-3.5 rounded-2xl border border-red-200 transition"
             >
               <span className="text-sm font-bold text-red-600 flex items-center gap-2">
-                {"🗑️ Clear All Data"}
+                {lang === "bn" ? "🗑️ সব ডেটা মুছে ফেলো" : "🗑️ Clear All Data"}
               </span>
               <span className="text-red-400">›</span>
             </button>
@@ -2204,7 +2216,7 @@ export default function Home() {
                 onClick={handleLogout}
                 className="text-[11px] font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition shrink-0"
               >
-                {"Log Out"}
+                {lang === "bn" ? "লগ-আউট" : "Log Out"}
               </button>
             </div>
           </div>
@@ -2218,40 +2230,40 @@ export default function Home() {
             {clearDataModal.step === "confirm" ? (
               <>
                 <h3 className="text-base font-bold text-slate-800">
-                  {"🗑️ Clear All Data"}
+                  {lang === "bn" ? "🗑️ সব ডেটা মুছে ফেলো" : "🗑️ Clear All Data"}
                 </h3>
                 <p className="text-sm text-slate-500 font-medium">
-                  {"Do you want to delete all courses, or choose specific ones to delete?"}
+                  {lang === "bn" ? "তুমি কি সব কোর্স ডিলিট করতে চাও, নাকি নির্দিষ্ট কিছু কোর্স বেছে ডিলিট করতে চাও?" : "Do you want to delete all courses, or choose specific ones to delete?"}
                 </p>
                 <div className="flex flex-col gap-2 pt-2">
                   <button
                     onClick={handleClearAllCourses}
                     className="w-full px-4 py-2.5 rounded-xl text-xs font-bold bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-100"
                   >
-                    {"Delete All Courses"}
+                    {lang === "bn" ? "সব কোর্স ডিলিট করো" : "Delete All Courses"}
                   </button>
                   <button
                     onClick={handleGoToSelectDelete}
                     className="w-full px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700"
                   >
-                    {"Choose Specific Courses"}
+                    {lang === "bn" ? "নির্দিষ্ট কিছু বেছে নাও" : "Choose Specific Courses"}
                   </button>
                   <button
                     onClick={() => setClearDataModal({ isOpen: false, step: "confirm", selected: {} })}
                     className="w-full px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
                   >
-                    {"Cancel"}
+                    {lang === "bn" ? "বাতিল" : "Cancel"}
                   </button>
                 </div>
               </>
             ) : (
               <>
                 <h3 className="text-base font-bold text-slate-800">
-                  {"Choose Courses"}
+                  {lang === "bn" ? "কোর্স বেছে নাও" : "Choose Courses"}
                 </h3>
                 {myCourses.length === 0 ? (
                   <p className="text-sm text-slate-400">
-                    {"No courses"}
+                    {lang === "bn" ? "কোনো কোর্স নেই" : "No courses"}
                   </p>
                 ) : (
                   <div className="space-y-1.5 max-h-64 overflow-y-auto">
@@ -2276,13 +2288,13 @@ export default function Home() {
                     onClick={() => setClearDataModal({ isOpen: false, step: "confirm", selected: {} })}
                     className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
                   >
-                    {"Cancel"}
+                    {lang === "bn" ? "বাতিল" : "Cancel"}
                   </button>
                   <button
                     onClick={handleDeleteSelectedCourses}
                     className="px-4 py-2 rounded-xl text-xs font-bold bg-red-600 hover:bg-red-700 text-white"
                   >
-                    {"Delete"}
+                    {lang === "bn" ? "ডিলিট করো" : "Delete"}
                   </button>
                 </div>
               </>
@@ -2310,13 +2322,13 @@ export default function Home() {
                 onClick={closeConfirmModal}
                 className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
               >
-                {"Cancel"}
+                {lang === "bn" ? "বাতিল" : "Cancel"}
               </button>
               <button
                 onClick={handleConfirmModalYes}
                 className="px-4 py-2.5 rounded-xl text-xs font-bold bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-100"
               >
-                {"Yes, Delete"}
+                {lang === "bn" ? "হ্যাঁ, ডিলিট করো" : "Yes, Delete"}
               </button>
             </div>
           </div>
@@ -2332,7 +2344,7 @@ export default function Home() {
         >
           <span className="text-base">⚙️</span>
           <span className={`text-[11px] font-bold ${darkMode ? "text-[#a3abbb]" : "text-slate-500"}`}>
-            {"Settings"}
+            {lang === "bn" ? "সেটিংস" : "Settings"}
           </span>
         </button>
 
@@ -2340,10 +2352,24 @@ export default function Home() {
           onClick={handleUndo}
           disabled={!canUndo}
           className={`flex items-center gap-1.5 backdrop-blur-sm border rounded-full pl-2.5 pr-3.5 py-2 shadow-md transition disabled:opacity-40 disabled:cursor-not-allowed ${darkMode ? "bg-[rgba(30,37,48,0.9)] border-[#3a4557] hover:bg-[#1e2530]" : "bg-white/90 border-slate-200/70 hover:bg-white"}`}
-          title={canUndo ? "Restore previous state" : "Nothing to undo"}
+          title={canUndo ? (lang === "bn" ? "আগের অবস্থায় ফিরিয়ে নাও" : "Restore previous state") : (lang === "bn" ? "ফিরিয়ে নেওয়ার মতো কিছু নেই" : "Nothing to undo")}
         >
           <span className="text-base">↩️</span>
           <span className={`text-[11px] font-bold ${darkMode ? "text-[#a3abbb]" : "text-slate-500"}`}>{"Undo"}</span>
+        </button>
+      </div>
+
+      {/* Language Toggle Button (bottom-right) */}
+      <div className="fixed bottom-14 right-3 z-40">
+        <button
+          onClick={handleToggleLang}
+          className={`flex items-center gap-1.5 backdrop-blur-sm border rounded-full pl-2.5 pr-3.5 py-2 shadow-md transition ${darkMode ? "bg-[rgba(30,37,48,0.9)] border-[#3a4557] hover:bg-[#1e2530]" : "bg-white/90 border-slate-200/70 hover:bg-white"}`}
+          title={lang === "bn" ? "Switch to English" : "বাংলায় পরিবর্তন করো"}
+        >
+          <span className="text-base">🌐</span>
+          <span className={`text-[11px] font-bold ${darkMode ? "text-[#a3abbb]" : "text-slate-500"}`}>
+            {lang === "bn" ? "EN" : "বাং"}
+          </span>
         </button>
       </div>
 
