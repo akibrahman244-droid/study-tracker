@@ -1215,7 +1215,7 @@ export default function Home() {
                   </div>
 
                   {/* Course Body Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 items-start">
                     {/* Chapters & Topics List (শিক্ষক অনুযায়ী গ্রুপ করা) */}
                     <div>
                       <div className="flex justify-between items-center mb-3">
