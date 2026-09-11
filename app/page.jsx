@@ -872,7 +872,7 @@ export default function Home() {
         .dark-theme .bg-slate-300 { background-color: #48546a !important; }
 
         /* --- "STUDY TRACKER" heading, previously barely visible in dark navy on dark bg --- */
-        .dark-theme .text-\[\#1E405A\] { color: #8fb4de !important; }
+        .dark-theme .text-\[\#1E405A\] { color: #bde4e8 !important; }
 
         /* --- Muted accent palette (for eye comfort) --- */
         /* Blue / Indigo */
