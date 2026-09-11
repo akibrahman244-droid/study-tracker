@@ -827,6 +827,17 @@ export default function Home() {
         .dark-theme .bg-slate-900\/40 { background-color: rgba(0,0,0,0.6) !important; }
         .dark-theme input, .dark-theme select { background-color: #202836 !important; color: #e9ecf2 !important; }
 
+        /* --- এই তিনটে আগে dark mode-এও সাদা থেকে যাচ্ছিল (settings/undo বাটন, সিগনেচার) --- */
+        .dark-theme .bg-white\/90 { background-color: rgba(30,37,48,0.9) !important; }
+        .dark-theme .bg-white\/70 { background-color: rgba(30,37,48,0.7) !important; }
+        .dark-theme .hover\:bg-white:hover { background-color: #1e2530 !important; }
+
+        /* --- টগল সুইচের অফ-স্টেট, নাহলে dark mode-এ ফ্যাকাশে সাদা দেখায় --- */
+        .dark-theme .bg-slate-300 { background-color: #48546a !important; }
+
+        /* --- "STUDY TRACKER" হেডিং, আগে dark bg-তে কালচে নেভি রঙে প্রায় বোঝা যেত না --- */
+        .dark-theme .text-\[\#1E405A\] { color: #8fb4de !important; }
+
         /* --- মিউটেড অ্যাকসেন্ট প্যালেট (চোখে আরাম দেওয়ার জন্য) --- */
         /* নীল / ইনডিগো */
         .dark-theme .bg-blue-50 { background-color: rgba(99,102,241,0.14) !important; }
@@ -1166,7 +1177,7 @@ export default function Home() {
                     {!isCardExpanded && (
                       <div className="flex-1 flex flex-col items-center justify-center min-w-[130px]">
                         <p className="text-lg font-bold text-blue-500 whitespace-nowrap">
-                          Best 3 CT: <span className="text-blue-600">{best3Avg}</span>
+                          CT Average: <span className="text-blue-600">{best3Avg}</span>
                         </p>
                         <p className="text-sm font-black text-emerald-600 whitespace-nowrap text-center">
                           {neededForA <= 0
