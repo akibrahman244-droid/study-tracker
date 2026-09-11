@@ -946,14 +946,6 @@ export default function Home() {
       <div className="max-w-4xl mx-auto">
         {/* Title Header */}
         <div className="text-center mb-6 relative">
-          {isSyncing && (
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <span className="text-[10px] font-bold text-blue-500 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></span>
-                {lang === "bn" ? "সেভ হচ্ছে..." : "Saving..."}
-              </span>
-            </div>
-          )}
           <h1 className="text-3xl md:text-4xl font-blueprint font-extrabold text-[#de3267] mb-2 tracking-tight">
             🏗️ STUDY TRACKER
           </h1>
@@ -2357,6 +2349,18 @@ export default function Home() {
                 {lang === "bn" ? "হ্যাঁ, ডিলিট করো" : "Yes, Delete"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Saving indicator (bottom-left, above Settings) */}
+      {isSyncing && (
+        <div className="fixed bottom-14 [bottom:calc(3.5rem+env(safe-area-inset-bottom))] left-3 z-40">
+          <div className={`flex items-center gap-1.5 backdrop-blur-sm border rounded-full pl-2.5 pr-3.5 py-2 shadow-md ${darkMode ? "bg-[rgba(30,37,48,0.9)] border-[#3a4557]" : "bg-white/90 border-slate-200/70"}`}>
+            <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></span>
+            <span className="text-[11px] font-bold text-blue-500">
+              {lang === "bn" ? "সেভ হচ্ছে..." : "Saving..."}
+            </span>
           </div>
         </div>
       )}
