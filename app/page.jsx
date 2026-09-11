@@ -742,7 +742,7 @@ export default function Home() {
   // --- Login Gate: the main app won't be visible until signed in with Google ---
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-[#EAE7DC] flex items-center justify-center p-4">
+      <div className="min-h-screen min-h-[100dvh] bg-[#EAE7DC] flex items-center justify-center p-4">
         <p className="text-slate-400 text-sm font-medium">{lang === "bn" ? "লোড হচ্ছে..." : "Loading..."}</p>
       </div>
     );
@@ -751,7 +751,7 @@ export default function Home() {
   if (!user) {
     return (
       <div
-        className="min-h-screen bg-[#EAE7DC] flex items-center justify-center p-4"
+        className="min-h-screen min-h-[100dvh] bg-[#EAE7DC] flex items-center justify-center p-4"
         style={{
           backgroundImage:
             "linear-gradient(rgba(30,64,90,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(30,64,90,0.07) 1px, transparent 1px)",
@@ -801,7 +801,7 @@ export default function Home() {
         </div>
 
         {/* Language Toggle Button (bottom-right) */}
-        <div className="fixed bottom-14 right-3 z-40">
+        <div className="fixed bottom-14 [bottom:calc(3.5rem+env(safe-area-inset-bottom))] right-3 z-40">
           <button
             onClick={handleToggleLang}
             className="flex items-center gap-1.5 backdrop-blur-sm border rounded-full pl-2.5 pr-3.5 py-2 shadow-md transition bg-white/90 border-slate-200/70 hover:bg-white"
@@ -815,7 +815,7 @@ export default function Home() {
         </div>
 
         {/* Signature Watermark */}
-        <div className="fixed bottom-3 right-3 z-40 pointer-events-none select-none">
+        <div className="fixed bottom-3 [bottom:calc(0.75rem+env(safe-area-inset-bottom))] right-3 z-40 pointer-events-none select-none">
           <div className="flex items-center gap-1.5 backdrop-blur-sm border rounded-full pl-2 pr-3 py-1 shadow-sm bg-white/70 border-slate-200/70">
             <span className="text-[13px]">🏗️</span>
             <span className="text-[10px] font-semibold tracking-wide text-slate-400">
@@ -829,7 +829,7 @@ export default function Home() {
 
   return (
     <div
-      className={`min-h-screen ${darkMode ? "dark-theme" : ""} p-4 md:p-8 text-slate-800 font-sans`}
+      className={`min-h-screen min-h-[100dvh] ${darkMode ? "dark-theme" : ""} p-4 md:p-8 text-slate-800 font-sans`}
       style={{
         backgroundColor: darkMode ? "#151a22" : "#EAE7DC",
         backgroundImage: darkMode
@@ -2360,7 +2360,7 @@ export default function Home() {
       )}
 
       {/* Settings & Undo Buttons (bottom-left) */}
-      <div className="fixed bottom-3 left-3 z-40 flex items-center gap-2">
+      <div className="fixed bottom-3 [bottom:calc(0.75rem+env(safe-area-inset-bottom))] left-3 z-40 flex items-center gap-2">
         <button
           onClick={() => setSettingsOpen(true)}
           className={`flex items-center gap-1.5 backdrop-blur-sm border rounded-full pl-2.5 pr-3.5 py-2 shadow-md transition ${darkMode ? "bg-[rgba(30,37,48,0.9)] border-[#3a4557] hover:bg-[#1e2530]" : "bg-white/90 border-slate-200/70 hover:bg-white"}`}
@@ -2384,7 +2384,7 @@ export default function Home() {
       </div>
 
       {/* Language Toggle Button (bottom-right) */}
-      <div className="fixed bottom-14 right-3 z-40">
+      <div className="fixed bottom-14 [bottom:calc(3.5rem+env(safe-area-inset-bottom))] right-3 z-40">
         <button
           onClick={handleToggleLang}
           className={`flex items-center gap-1.5 backdrop-blur-sm border rounded-full pl-2.5 pr-3.5 py-2 shadow-md transition ${darkMode ? "bg-[rgba(30,37,48,0.9)] border-[#3a4557] hover:bg-[#1e2530]" : "bg-white/90 border-slate-200/70 hover:bg-white"}`}
@@ -2398,7 +2398,7 @@ export default function Home() {
       </div>
 
       {/* Signature Watermark */}
-      <div className="fixed bottom-3 right-3 z-40 pointer-events-none select-none">
+      <div className="fixed bottom-3 [bottom:calc(0.75rem+env(safe-area-inset-bottom))] right-3 z-40 pointer-events-none select-none">
         <div className={`flex items-center gap-1.5 backdrop-blur-sm border rounded-full pl-2 pr-3 py-1 shadow-sm ${darkMode ? "bg-[rgba(30,37,48,0.7)] border-[#3a4557]" : "bg-white/70 border-slate-200/70"}`}>
           <span className="text-[13px]">🏗️</span>
           <span className={`text-[10px] font-semibold tracking-wide ${darkMode ? "text-[#7c8598]" : "text-slate-400"}`}>
